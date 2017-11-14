@@ -1,0 +1,21 @@
+{
+    "name": "zegnat/linkextractor",
+    "description": "A package that tries to figure out what resources an HTML document links to.",
+    "version": "0.1.0",
+    "type": "library",
+    "license": "0BSD",
+    "authors": [
+        {
+            "name": "Martijn van der Ven",
+            "email": "martijn@vanderven.se"
+        }
+    ],
+    "require": {
+        "league/uri": "^5.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Zegnat\\LinkExtractor\\": "src/"
+        }
+    }
+}
