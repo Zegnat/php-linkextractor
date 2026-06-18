@@ -20,9 +20,8 @@ declare(strict_types=1);
 
 namespace Zegnat\LinkExtractor;
 
-use League\Uri\Schemes\Http;
-use League\Uri\Modifiers\Resolve;
-use League\Uri\UriException;
+use GuzzleHttp\Psr7\Uri;
+use GuzzleHttp\Psr7\UriResolver;
 
 /**
  * LinkExtractor class for finding all linked resources in an HTML document.
@@ -64,7 +63,7 @@ class LinkExtractor
     /** @var XPath $root */
     private $xpath;
 
-    /** @var string $baseUrl */
+    /** @var Uri $baseUrl */
     private $baseUrl;
 
     /** @var null|array $extracted */
@@ -93,10 +92,9 @@ class LinkExtractor
      **/
     private function resolveUrl(string $url): string
     {
-        $resolver = new Resolve($this->baseUrl);
         try {
-            return \strval($resolver->process(Http::createFromString($url)));
-        } catch (UriException $e) {
+            return \strval(UriResolver::resolve($this->baseUrl, new Uri($url)));
+        } catch (\InvalidArgumentException $e) {
             return $url;
         }
     }
@@ -114,7 +112,7 @@ class LinkExtractor
      * @param \DOMNode $root    Any DOMNode, including the entire DOMDocument, to use as root.
      * @param string   $baseUrl The URL for the document, to resolve relative URLs against.
      *
-     * @throws League\Uri\UriException If the BASE element’s HREF could not be parsed as HTTP valid.
+     * @throws \InvalidArgumentException If the BASE element’s HREF could not be parsed as a valid URI.
      *
      * @api
      **/
@@ -123,15 +121,14 @@ class LinkExtractor
         $this->root = $root;
         $ownerDocument = $root instanceof \DOMDocument ? $root : $root->ownerDocument;
         $this->xpath = new \DOMXPath($ownerDocument);
-        $baseUrl = Http::createFromString($baseUrl);
+        $baseUrl = new Uri($baseUrl);
 
         // Update the base URL in case a BASE element was provided.
         // We are not going to care about the validity of the location of the BASE element.
         $base = $this->xpath->query('//base[@href]', $root);
         if ($base !== false && $base->length > 0) {
-            $baseElementUrl = Http::createFromString($this->htmlStripWhitespace($base->item(0)->getAttribute('href')));
-            $resolver = new Resolve($baseUrl);
-            $baseUrl = $resolver->process($baseElementUrl);
+            $baseElementUrl = new Uri($this->htmlStripWhitespace($base->item(0)->getAttribute('href')));
+            $baseUrl = UriResolver::resolve($baseUrl, $baseElementUrl);
         }
 
         $this->baseUrl = $baseUrl;
