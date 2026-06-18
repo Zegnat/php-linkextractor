@@ -1,0 +1,28 @@
+# Build + run the test suite on a single PHP version.
+# Parametrised so the Makefile can sweep the whole matrix.
+#
+# Example:
+#   docker build -f Dockerfile.matrix --build-arg PHP_VERSION=8.4 -t lex:8.4 .
+#   docker run --rm lex:8.4
+ARG PHP_VERSION=8.3
+
+# Resolve dependencies in the Composer image (Alpine, ships git + unzip) but
+# resolve *as if* running on the target PHP version via `platform.php`. This
+# avoids installing build tools into the - sometimes EOL - runtime images, and
+# lets one modern Composer produce a vendor/ for any PHP from 7.0 to 8.4.
+# Extension requirements are ignored here; the runtime image provides them.
+# No composer.lock is committed, so this is a fresh resolve per PHP version.
+# Pinned: composer:2 (latest) currently ships PHP 8.5, which has a dependency
+# resolver regression that fails to back off to older majors for low platform.php.
+FROM composer:2.7 AS deps
+ARG PHP_VERSION
+WORKDIR /app
+COPY composer.json ./
+RUN composer config platform.php "${PHP_VERSION}.0" \
+    && composer update --no-interaction --prefer-stable --ignore-platform-req=ext-*
+
+FROM php:${PHP_VERSION}-cli
+WORKDIR /app
+COPY . .
+COPY --from=deps /app/vendor ./vendor
+CMD ["vendor/bin/phpunit"]
