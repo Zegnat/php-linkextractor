@@ -29,7 +29,7 @@ class LinkExtractorTest extends \PHPUnit\Framework\TestCase
         $this->assertEquals($expectedUrls, $extractor->extract());
     }
 
-    public function filesProvider(): array
+    public static function filesProvider(): array
     {
         $htmlfiles = glob(__DIR__ . '/files/*.html');
         natsort($htmlfiles);
