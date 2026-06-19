@@ -21,12 +21,21 @@ class LinkExtractorTest extends \PHPUnit\Framework\TestCase
     /**
      * @dataProvider filesProvider
      */
-    public function testExtract($htmlfile, $fileUrl, $expectedUrls)
+    public function testExtract($dom, $fileUrl, $expectedUrls)
     {
-        $dom = new \DOMDocument();
-        $dom->loadHTMLFile($htmlfile);
         $extractor = new LinkExtractor($dom, $fileUrl);
         $this->assertEquals($expectedUrls, $extractor->extract());
+    }
+
+    public function testLinksTo()
+    {
+        $dom = new \DOMDocument();
+        $dom->loadHTMLFile(__DIR__ . '/files/example.com-index.html', LIBXML_NOERROR | LIBXML_NOWARNING);
+        $extractor = new LinkExtractor($dom, 'http://example.com/index.html');
+        $extractor->extract();
+        $this->assertTrue($extractor->linksTo('http://www.iana.org/domains/example'));
+        $this->assertFalse($extractor->linksTo('https://github.com/'));
+        $this->assertFalse($extractor->linksTo(':'));
     }
 
     public static function filesProvider(): array
@@ -38,8 +47,10 @@ class LinkExtractorTest extends \PHPUnit\Framework\TestCase
         foreach ($htmlfiles as $htmlfile) {
             $urlsfile = substr($htmlfile, 0, -5) . '.urls';
             $urlfile = substr($htmlfile, 0, -5) . '.url';
+            $dom = new \DOMDocument();
+            $dom->loadHTMLFile($htmlfile, LIBXML_NOERROR | LIBXML_NOWARNING);
             $data[] = [
-                $htmlfile,
+                $dom,
                 trim(file_get_contents($urlfile)),
                 file($urlsfile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES)
             ];
