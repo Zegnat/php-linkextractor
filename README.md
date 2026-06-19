@@ -80,7 +80,12 @@ $ castor matrix     # run the whole matrix
 $ castor test 8.4   # run a single version
 ```
 
+Some test fixtures under `tests/files` are copied verbatim from external 
+open-source projects under their respective licenses; see [CREDITS.md](CREDITS.md) 
+for their sources and the `LICENSES` directory ([REUSE][reuse]).
+
 [castor]: https://castor.jolicode.com/
+[reuse]: https://reuse.software/
 
 ## License
 
