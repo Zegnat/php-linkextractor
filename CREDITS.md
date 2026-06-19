@@ -34,3 +34,11 @@ Used only where WPT has no clean static file for a link location.
 - `whatwg-del-cite.html` — [`del` element](https://html.spec.whatwg.org/multipage/edits.html#the-del-element)
 - `whatwg-area-imagemap.html` — [image map](https://html.spec.whatwg.org/multipage/image-maps.html#image-maps)
 - `whatwg-audio.html` — [`audio` element](https://html.spec.whatwg.org/multipage/media.html#the-audio-element)
+
+## webmention.rocks — Apache-2.0
+
+Verbatim captures of the rendered pages (no static HTML upstream; snapshot 2026-06-19).
+
+- `webmention-rocks-test-3.html` — <https://webmention.rocks/test/3>
+- `webmention-rocks-test-4.html` — <https://webmention.rocks/test/4>
+- `webmention-rocks-test-5.html` — <https://webmention.rocks/test/5>
