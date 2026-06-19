@@ -78,6 +78,7 @@ container, so only Docker and Castor are needed on the host:
 ``` bash
 $ castor matrix     # run the whole matrix
 $ castor test 8.4   # run a single version
+$ castor coverage   # run with code coverage and enforce the minimum
 ```
 
 Some test fixtures under `tests/files` are copied verbatim from external 

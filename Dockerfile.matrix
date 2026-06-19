@@ -22,7 +22,17 @@ RUN composer config platform.php "${PHP_VERSION}.0" \
     && composer update --no-interaction --prefer-stable --ignore-platform-req=ext-*
 
 FROM php:${PHP_VERSION}-cli
+ARG WITH_COVERAGE=
 WORKDIR /app
 COPY . .
 COPY --from=deps /app/vendor ./vendor
+# Optional PCOV coverage driver, only built into the coverage image. Runs on a
+# modern PHP where apt works normally, so no archive handling is needed.
+RUN if [ -n "$WITH_COVERAGE" ]; then \
+        apt-get update \
+        && apt-get install -y --no-install-recommends $PHPIZE_DEPS \
+        && pecl install pcov \
+        && docker-php-ext-enable pcov \
+        && rm -rf /var/lib/apt/lists/*; \
+    fi
 CMD ["vendor/bin/phpunit"]

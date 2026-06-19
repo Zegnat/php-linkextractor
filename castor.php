@@ -1,6 +1,7 @@
 <?php
 
 use Castor\Attribute\AsArgument;
+use Castor\Attribute\AsOption;
 use Castor\Attribute\AsTask;
 
 use function Castor\context;
@@ -55,4 +56,39 @@ function matrix(): int
     io()->success('All PHP versions passed.');
 
     return 0;
+}
+
+#[AsTask(description: 'Run the tests with code coverage and enforce a minimum')]
+function coverage(
+    #[AsArgument(description: 'PHP version to measure coverage on')]
+    string $php = DEFAULT_PHP,
+    #[AsOption(description: 'Minimum percentage of source lines that must be covered')]
+    float $min = 100.0,
+): int {
+    $tag = "linkextractor-coverage:{$php}";
+    $build = run(
+        [
+            'docker', 'build', '-f', 'Dockerfile.matrix', '--build-arg',
+            "PHP_VERSION={$php}", '--build-arg', 'WITH_COVERAGE=1', '-t', $tag, '.',
+        ],
+        context()->withAllowFailure(true),
+    );
+    if (!$build->isSuccessful()) {
+        return $build->getExitCode();
+    }
+
+    // PHPUnit has no built-in coverage threshold; enforce the minimum from the Clover report.
+    $check = '$m = simplexml_load_file("/tmp/clover.xml")->project->metrics;'
+        . ' $p = (int) $m["statements"] > 0 ? $m["coveredstatements"] / $m["statements"] * 100 : 100;'
+        . ' printf("Line coverage: %.2f%% (required ' . $min . '%%)\n", $p);'
+        . ' exit($p + 1e-9 < ' . $min . ' ? 1 : 0);';
+
+    return run(
+        [
+            'docker', 'run', '--rm', $tag, 'sh', '-c',
+            'vendor/bin/phpunit --coverage-text --coverage-clover /tmp/clover.xml --coverage-filter src'
+                . " && php -r '{$check}'",
+        ],
+        context()->withAllowFailure(true),
+    )->getExitCode();
 }
