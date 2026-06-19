@@ -21,3 +21,16 @@ This records where each came from.
 - `wpt-ins-cite.html` — [ins/cite-isvalid.html](https://github.com/web-platform-tests/wpt/blob/master/conformance-checkers/html/elements/ins/cite-isvalid.html)
 - `wpt-button-formaction.html` — [button/formaction-isvalid.html](https://github.com/web-platform-tests/wpt/blob/master/conformance-checkers/html/elements/button/formaction-isvalid.html)
 - `wpt-input-formaction.html` — [input/type-submit-formaction-isvalid.html](https://github.com/web-platform-tests/wpt/blob/master/conformance-checkers/html/elements/input/type-submit-formaction-isvalid.html)
+
+## WHATWG HTML Standard — CC-BY-4.0 prose / BSD-3-Clause code
+
+Used only where WPT has no clean static file for a link location.
+
+- `whatwg-base-element.html` — [`base` element](https://html.spec.whatwg.org/multipage/semantics.html#the-base-element)
+- `whatwg-video.html` — [`video`/`track` element](https://html.spec.whatwg.org/multipage/media.html#the-video-element)
+- `whatwg-form.html` — [pizza order form](https://html.spec.whatwg.org/multipage/forms.html#writing-a-form's-user-interface)
+- `whatwg-blockquote-cite.html` — [`blockquote` element](https://html.spec.whatwg.org/multipage/grouping-content.html#the-blockquote-element)
+- `whatwg-q-cite.html` — [`q` element](https://html.spec.whatwg.org/multipage/text-level-semantics.html#the-q-element)
+- `whatwg-del-cite.html` — [`del` element](https://html.spec.whatwg.org/multipage/edits.html#the-del-element)
+- `whatwg-area-imagemap.html` — [image map](https://html.spec.whatwg.org/multipage/image-maps.html#image-maps)
+- `whatwg-audio.html` — [`audio` element](https://html.spec.whatwg.org/multipage/media.html#the-audio-element)
