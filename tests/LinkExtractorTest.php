@@ -38,8 +38,32 @@ class LinkExtractorTest extends \PHPUnit\Framework\TestCase
         $this->assertFalse($extractor->linksTo(':'));
     }
 
+    /**
+     * @dataProvider linkLocationProvider
+     */
+    public function testLinkLocationIsExercisedByAFixture($attribute, $element, $needsValue)
+    {
+        $covered = false;
+        foreach (self::filesProvider() as $case) {
+            $xpath = new \DOMXPath($case[0]);
+            foreach ($xpath->query("//{$element}[@{$attribute}]") as $node) {
+                if (!$needsValue || strlen(trim($node->getAttribute($attribute))) > 0) {
+                    $covered = true;
+                    break 2;
+                }
+            }
+        }
+
+        $this->assertTrue($covered, "No fixture exercises {$element}[@{$attribute}].");
+    }
+
     public static function filesProvider(): array
     {
+        static $data;
+        if ($data !== null) {
+            return $data;
+        }
+
         $htmlfiles = glob(__DIR__ . '/files/*.html');
         natsort($htmlfiles);
 
@@ -56,5 +80,19 @@ class LinkExtractorTest extends \PHPUnit\Framework\TestCase
             ];
         }
         return $data;
+    }
+
+    public static function linkLocationProvider(): array
+    {
+        $defaults = (new \ReflectionClass(LinkExtractor::class))->getDefaultProperties();
+        $locations = [];
+        foreach (['urlAttributes' => false, 'nonEmptyUrlAttributes' => true] as $property => $needsValue) {
+            foreach ($defaults[$property] as $attribute => $elements) {
+                foreach ($elements as $element) {
+                    $locations["{$element}[@{$attribute}]"] = [$attribute, $element, $needsValue];
+                }
+            }
+        }
+        return $locations;
     }
 }
