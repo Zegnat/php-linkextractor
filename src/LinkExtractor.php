@@ -33,7 +33,7 @@ class LinkExtractor
      *
      * @var array $urlAttributes
      * @var array $nonEmptyUrlAttributes These treat empty values as invalid.
-     * @see https://www.w3.org/TR/html5/index.html#attributes-1 Data source
+     * @see https://html.spec.whatwg.org/multipage/indices.html#attributes-3 Data source
      **/
     private $urlAttributes = [
         'cite' => ['blockquote', 'del', 'ins', 'q'],
