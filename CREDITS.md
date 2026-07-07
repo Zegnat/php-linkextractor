@@ -42,3 +42,10 @@ Verbatim captures of the rendered pages (no static HTML upstream; snapshot 2026-
 - `webmention-rocks-test-3.html` — <https://webmention.rocks/test/3>
 - `webmention-rocks-test-4.html` — <https://webmention.rocks/test/4>
 - `webmention-rocks-test-5.html` — <https://webmention.rocks/test/5>
+
+## MDN Web Docs — CC0-1.0
+
+Code samples from MDN are released to the public domain under CC0.
+
+- `mdn-a-ping.html` — [HTMLAnchorElement: ping property](https://developer.mozilla.org/en-US/docs/Web/API/HTMLAnchorElement/ping)
+- `mdn-area-ping.html` — [HTMLAreaElement: ping property](https://developer.mozilla.org/en-US/docs/Web/API/HTMLAreaElement/ping)

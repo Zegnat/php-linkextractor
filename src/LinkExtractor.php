@@ -48,6 +48,9 @@ class LinkExtractor
         'poster' => ['video'],
         'src' => ['audio', 'embed', 'iframe', 'img', 'input', 'script', 'source', 'track', 'video'],
     ];
+    private $spaceSeparatedUrlAttributes = [
+        'ping' => ['a', 'area'],
+    ];
 
     /**
      * Characters identified as space characters per the HTML5 spec.
@@ -150,7 +153,8 @@ class LinkExtractor
             \array_reduce(
                 \array_unique(\array_merge(
                     \array_keys($this->urlAttributes),
-                    \array_keys($this->nonEmptyUrlAttributes)
+                    \array_keys($this->nonEmptyUrlAttributes),
+                    \array_keys($this->spaceSeparatedUrlAttributes)
                 )),
                 function (string $xpath, string $attribute): string {
                     return $xpath . ' | .//@' . $attribute;
@@ -165,15 +169,24 @@ class LinkExtractor
             $name = $urlAttribute->name;
             $url = $this->htmlStripWhitespace($urlAttribute->value);
             $element = $urlAttribute->parentNode->tagName;
-            if ((
+            if (
                 \array_key_exists($name, $this->urlAttributes)
                 && \in_array($element, $this->urlAttributes[$name])
-                ) || (
+            ) {
+                $links[] = $url;
+            } elseif (
                 \array_key_exists($name, $this->nonEmptyUrlAttributes)
                 && \in_array($element, $this->nonEmptyUrlAttributes[$name])
                 && \strlen($url) > 0
-            )) {
+            ) {
                 $links[] = $url;
+            } elseif (
+                \array_key_exists($name, $this->spaceSeparatedUrlAttributes)
+                && \in_array($element, $this->spaceSeparatedUrlAttributes[$name])
+            ) {
+                foreach (\preg_split('@[' . $this->htmlSpaceCharacters . ']+@', $url, -1, PREG_SPLIT_NO_EMPTY) as $singleUrl) {
+                    $links[] = $singleUrl;
+                }
             }
         }
         $this->extracted = \array_map(
