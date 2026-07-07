@@ -21,16 +21,49 @@ class LinkExtractorTest extends \PHPUnit\Framework\TestCase
     /**
      * @dataProvider filesProvider
      */
-    public function testExtract($htmlfile, $fileUrl, $expectedUrls)
+    public function testExtract($dom, $fileUrl, $expectedUrls)
     {
-        $dom = new \DOMDocument();
-        $dom->loadHTMLFile($htmlfile);
         $extractor = new LinkExtractor($dom, $fileUrl);
         $this->assertEquals($expectedUrls, $extractor->extract());
     }
 
-    public function filesProvider(): array
+    public function testLinksTo()
     {
+        $dom = new \DOMDocument();
+        $dom->loadHTMLFile(__DIR__ . '/files/example.com-index.html', LIBXML_NOERROR | LIBXML_NOWARNING);
+        $extractor = new LinkExtractor($dom, 'http://example.com/index.html');
+        $extractor->extract();
+        $this->assertTrue($extractor->linksTo('http://www.iana.org/domains/example'));
+        $this->assertFalse($extractor->linksTo('https://github.com/'));
+        $this->assertFalse($extractor->linksTo(':'));
+    }
+
+    /**
+     * @dataProvider linkLocationProvider
+     */
+    public function testLinkLocationIsExercisedByAFixture($attribute, $element, $needsValue)
+    {
+        $covered = false;
+        foreach (self::filesProvider() as $case) {
+            $xpath = new \DOMXPath($case[0]);
+            foreach ($xpath->query("//{$element}[@{$attribute}]") as $node) {
+                if (!$needsValue || strlen(trim($node->getAttribute($attribute))) > 0) {
+                    $covered = true;
+                    break 2;
+                }
+            }
+        }
+
+        $this->assertTrue($covered, "No fixture exercises {$element}[@{$attribute}].");
+    }
+
+    public static function filesProvider(): array
+    {
+        static $data;
+        if ($data !== null) {
+            return $data;
+        }
+
         $htmlfiles = glob(__DIR__ . '/files/*.html');
         natsort($htmlfiles);
 
@@ -38,12 +71,28 @@ class LinkExtractorTest extends \PHPUnit\Framework\TestCase
         foreach ($htmlfiles as $htmlfile) {
             $urlsfile = substr($htmlfile, 0, -5) . '.urls';
             $urlfile = substr($htmlfile, 0, -5) . '.url';
+            $dom = new \DOMDocument();
+            $dom->loadHTMLFile($htmlfile, LIBXML_NOERROR | LIBXML_NOWARNING);
             $data[] = [
-                $htmlfile,
+                $dom,
                 trim(file_get_contents($urlfile)),
                 file($urlsfile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES)
             ];
         }
         return $data;
+    }
+
+    public static function linkLocationProvider(): array
+    {
+        $defaults = (new \ReflectionClass(LinkExtractor::class))->getDefaultProperties();
+        $locations = [];
+        foreach (['urlAttributes' => false, 'nonEmptyUrlAttributes' => true] as $property => $needsValue) {
+            foreach ($defaults[$property] as $attribute => $elements) {
+                foreach ($elements as $element) {
+                    $locations["{$element}[@{$attribute}]"] = [$attribute, $element, $needsValue];
+                }
+            }
+        }
+        return $locations;
     }
 }

@@ -64,6 +64,30 @@ bool(true)
 */
 ```
 
+## Supported PHP versions
+
+This library requires PHP 7.0 or newer and is tested against PHP 7.0, 7.1, 
+7.2, 7.3, 7.4, 8.0, 8.1, 8.2, 8.3 and 8.4.
+
+## Testing
+
+Tests run on every supported PHP version through Docker, orchestrated by 
+[Castor][castor]. Each PHP version and its dependencies live entirely in their 
+container, so only Docker and Castor are needed on the host:
+
+``` bash
+$ castor matrix     # run the whole matrix
+$ castor test 8.4   # run a single version
+$ castor coverage   # run with code coverage and enforce the minimum
+```
+
+Some test fixtures under `tests/files` are copied verbatim from external 
+open-source projects under their respective licenses; see [CREDITS.md](CREDITS.md) 
+for their sources and the `LICENSES` directory ([REUSE][reuse]).
+
+[castor]: https://castor.jolicode.com/
+[reuse]: https://reuse.software/
+
 ## License
 
 The BSD Zero Clause License (0BSD). Please see the LICENSE file for more 
