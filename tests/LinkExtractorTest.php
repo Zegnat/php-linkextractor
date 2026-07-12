@@ -46,6 +46,19 @@ class LinkExtractorTest extends \PHPUnit\Framework\TestCase
         $this->assertFalse($extractor->linksTo(':'));
     }
 
+    public function testLinksToModern()
+    {
+        if (!class_exists('\\Dom\\HTMLDocument')) {
+            $this->markTestSkipped('Modern \Dom\HTMLDocument not available.');
+        }
+        $dom = \Dom\HTMLDocument::createFromFile(__DIR__ . '/files/example.com-index.html', LIBXML_NOERROR);
+        $extractor = new LinkExtractor($dom, 'http://example.com/index.html');
+        $extractor->extract();
+        $this->assertTrue($extractor->linksTo('http://www.iana.org/domains/example'));
+        $this->assertFalse($extractor->linksTo('https://github.com/'));
+        $this->assertFalse($extractor->linksTo(':'));
+    }
+
     /**
      * @dataProvider linkLocationProvider
      */
