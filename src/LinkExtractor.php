@@ -6,8 +6,6 @@
  * 1. what constitutes a link between an HTML document and another resource, and
  * 2. how to supply them in a useful (resolved) format.
  *
- * PHP version 7
- *
  * @author    Martijn van der Ven <martijn@vanderven.se>
  * @copyright 2017 Martijn van der Ven
  * @license   BSD Zero Clause License
@@ -53,10 +51,10 @@ class LinkExtractor
     ];
 
     /**
-     * Characters identified as space characters per the HTML5 spec.
+     * Characters identified as ASCII whitespace by the Infra Standard.
      *
      * @var string $htmlSpaceCharacters
-     * @see https://www.w3.org/TR/html5/infrastructure.html#space-character
+     * @see https://infra.spec.whatwg.org/#ascii-whitespace
      **/
     private $htmlSpaceCharacters = ' \t\n\f\r';
 
@@ -73,13 +71,13 @@ class LinkExtractor
     private $extracted = null;
 
     /**
-     * Strip the leading and trailing whitespace per the HTML5 spec.
+     * Strip the leading and trailing whitespace per the Infra Standard.
      *
      * @param string $string
      *
      * @return string
      *
-     * @see https://www.w3.org/TR/html5/infrastructure.html#strip-leading-and-trailing-whitespace
+     * @see https://infra.spec.whatwg.org/#strip-leading-and-trailing-ascii-whitespace
      **/
     private function htmlStripWhitespace(string $string): string
     {
