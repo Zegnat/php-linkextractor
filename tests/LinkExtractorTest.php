@@ -6,7 +6,7 @@
  * @author    Christian Weiske <cweiske@cweiske.de>
  * @copyright 2017 Martijn van der Ven and authors
  * @license   BSD Zero Clause License
- * @version   0.1.0
+ * @version   0.3.0
  * @link      https://github.com/Zegnat/php-linkextractor
  */
 

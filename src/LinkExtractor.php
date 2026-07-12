@@ -9,7 +9,7 @@
  * @author    Martijn van der Ven <martijn@vanderven.se>
  * @copyright 2017 Martijn van der Ven
  * @license   BSD Zero Clause License
- * @version   0.1.0
+ * @version   0.3.0
  * @link      https://github.com/Zegnat/php-linkextractor
  * @see       https://github.com/w3c/webmention/issues/91 The discussion that prompted this.
  */

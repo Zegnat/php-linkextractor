@@ -1,7 +1,7 @@
 {
     "name": "zegnat/linkextractor",
     "description": "A package that tries to figure out what resources an HTML document links to.",
-    "version": "0.2.0",
+    "version": "0.3.0",
     "type": "library",
     "license": "0BSD",
     "authors": [
