@@ -77,7 +77,7 @@ $extractor = new \Zegnat\LinkExtractor\LinkExtractor($dom, 'http://example.com/i
 ## Supported PHP versions
 
 This library requires PHP 7.0 or newer and is tested against PHP 7.0, 7.1, 
-7.2, 7.3, 7.4, 8.0, 8.1, 8.2, 8.3 and 8.4.
+7.2, 7.3, 7.4, 8.0, 8.1, 8.2, 8.3, 8.4 and 8.5.
 
 From PHP 8.4 onwards it accepts both `\DOMNode` and `\Dom\Node`.
 
