@@ -60,10 +60,10 @@ class LinkExtractor
      **/
     private $htmlSpaceCharacters = ' \t\n\f\r';
 
-    /** @var DOMNode $root */
+    /** @var \DOMNode|\Dom\Node $root */
     private $root;
 
-    /** @var XPath $root */
+    /** @var \DOMXPath|\Dom\XPath $xpath */
     private $xpath;
 
     /** @var Uri $baseUrl */
@@ -112,23 +112,29 @@ class LinkExtractor
      * Even if a sub element of the document is supplied, it will still apply any BASE elements from th entire document
      * for the purpose of resolving relative URLs.
      *
-     * @param \DOMNode $root    Any DOMNode, including the entire DOMDocument, to use as root.
-     * @param string   $baseUrl The URL for the document, to resolve relative URLs against.
+     * @param \DOMNode|\Dom\Node $root    Any node, including a whole document, to use as root.
+     * @param string             $baseUrl The URL for the document, to resolve relative URLs against.
      *
+     * @throws \TypeError If $root is neither a \DOMNode nor a \Dom\Node.
      * @throws \InvalidArgumentException If the BASE element’s HREF could not be parsed as a valid URI.
      *
      * @api
      **/
-    public function __construct(\DOMNode $root, string $baseUrl = '')
+    public function __construct($root, string $baseUrl = '')
     {
+        $modernParser = \class_exists('\\Dom\\Node') && $root instanceof \Dom\Node;
+        if (!$root instanceof \DOMNode && !$modernParser) {
+            throw new \TypeError('$root must be a \\DOMNode or a \\Dom\\Node.');
+        }
         $this->root = $root;
-        $ownerDocument = $root instanceof \DOMDocument ? $root : $root->ownerDocument;
-        $this->xpath = new \DOMXPath($ownerDocument);
+        $ownerDocument = $root->ownerDocument ?? $root;
+        $this->xpath = $modernParser ? new \Dom\XPath($ownerDocument) : new \DOMXPath($ownerDocument);
         $baseUrl = new Uri($baseUrl);
 
         // Update the base URL in case a BASE element was provided.
         // We are not going to care about the validity of the location of the BASE element.
-        $base = $this->xpath->query('//base[@href]', $root);
+        // Match on local-name() because the modern parser adds a namespace.
+        $base = $this->xpath->query("//*[local-name()='base'][@href]", $root);
         if ($base !== false && $base->length > 0) {
             $baseElementUrl = new Uri($this->htmlStripWhitespace($base->item(0)->getAttribute('href')));
             $baseUrl = UriResolver::resolve($baseUrl, $baseElementUrl);
@@ -168,7 +174,7 @@ class LinkExtractor
         foreach ($urlAttributes as $urlAttribute) {
             $name = $urlAttribute->name;
             $url = $this->htmlStripWhitespace($urlAttribute->value);
-            $element = $urlAttribute->parentNode->tagName;
+            $element = \strtolower($urlAttribute->parentNode->tagName);
             if (
                 \array_key_exists($name, $this->urlAttributes)
                 && \in_array($element, $this->urlAttributes[$name])

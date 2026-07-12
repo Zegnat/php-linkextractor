@@ -16,6 +16,12 @@ namespace Zegnat\LinkExtractor;
 
 class LinkExtractorTest extends \PHPUnit\Framework\TestCase
 {
+    public function testConstructorRejectsUnsupportedRoot()
+    {
+        $this->expectException(\TypeError::class);
+        new LinkExtractor('not a DOM node');
+    }
+
     /**
      * @dataProvider filesProvider
      */
