@@ -6,12 +6,10 @@
  * 1. what constitutes a link between an HTML document and another resource, and
  * 2. how to supply them in a useful (resolved) format.
  *
- * PHP version 7
- *
  * @author    Martijn van der Ven <martijn@vanderven.se>
  * @copyright 2017 Martijn van der Ven
  * @license   BSD Zero Clause License
- * @version   0.1.0
+ * @version   0.3.0
  * @link      https://github.com/Zegnat/php-linkextractor
  * @see       https://github.com/w3c/webmention/issues/91 The discussion that prompted this.
  */
@@ -53,17 +51,17 @@ class LinkExtractor
     ];
 
     /**
-     * Characters identified as space characters per the HTML5 spec.
+     * Characters identified as ASCII whitespace by the Infra Standard.
      *
      * @var string $htmlSpaceCharacters
-     * @see https://www.w3.org/TR/html5/infrastructure.html#space-character
+     * @see https://infra.spec.whatwg.org/#ascii-whitespace
      **/
     private $htmlSpaceCharacters = ' \t\n\f\r';
 
-    /** @var DOMNode $root */
+    /** @var \DOMNode|\Dom\Node $root */
     private $root;
 
-    /** @var XPath $root */
+    /** @var \DOMXPath|\Dom\XPath $xpath */
     private $xpath;
 
     /** @var Uri $baseUrl */
@@ -73,13 +71,13 @@ class LinkExtractor
     private $extracted = null;
 
     /**
-     * Strip the leading and trailing whitespace per the HTML5 spec.
+     * Strip the leading and trailing whitespace per the Infra Standard.
      *
      * @param string $string
      *
      * @return string
      *
-     * @see https://www.w3.org/TR/html5/infrastructure.html#strip-leading-and-trailing-whitespace
+     * @see https://infra.spec.whatwg.org/#strip-leading-and-trailing-ascii-whitespace
      **/
     private function htmlStripWhitespace(string $string): string
     {
@@ -112,23 +110,29 @@ class LinkExtractor
      * Even if a sub element of the document is supplied, it will still apply any BASE elements from th entire document
      * for the purpose of resolving relative URLs.
      *
-     * @param \DOMNode $root    Any DOMNode, including the entire DOMDocument, to use as root.
-     * @param string   $baseUrl The URL for the document, to resolve relative URLs against.
+     * @param \DOMNode|\Dom\Node $root    Any node, including a whole document, to use as root.
+     * @param string             $baseUrl The URL for the document, to resolve relative URLs against.
      *
+     * @throws \TypeError If $root is neither a \DOMNode nor a \Dom\Node.
      * @throws \InvalidArgumentException If the BASE element’s HREF could not be parsed as a valid URI.
      *
      * @api
      **/
-    public function __construct(\DOMNode $root, string $baseUrl = '')
+    public function __construct($root, string $baseUrl = '')
     {
+        $modernParser = \class_exists('\\Dom\\Node') && $root instanceof \Dom\Node;
+        if (!$root instanceof \DOMNode && !$modernParser) {
+            throw new \TypeError('$root must be a \\DOMNode or a \\Dom\\Node.');
+        }
         $this->root = $root;
-        $ownerDocument = $root instanceof \DOMDocument ? $root : $root->ownerDocument;
-        $this->xpath = new \DOMXPath($ownerDocument);
+        $ownerDocument = $root->ownerDocument ?? $root;
+        $this->xpath = $modernParser ? new \Dom\XPath($ownerDocument) : new \DOMXPath($ownerDocument);
         $baseUrl = new Uri($baseUrl);
 
         // Update the base URL in case a BASE element was provided.
         // We are not going to care about the validity of the location of the BASE element.
-        $base = $this->xpath->query('//base[@href]', $root);
+        // Match on local-name() because the modern parser adds a namespace.
+        $base = $this->xpath->query("//*[local-name()='base'][@href]", $root);
         if ($base !== false && $base->length > 0) {
             $baseElementUrl = new Uri($this->htmlStripWhitespace($base->item(0)->getAttribute('href')));
             $baseUrl = UriResolver::resolve($baseUrl, $baseElementUrl);
@@ -168,7 +172,7 @@ class LinkExtractor
         foreach ($urlAttributes as $urlAttribute) {
             $name = $urlAttribute->name;
             $url = $this->htmlStripWhitespace($urlAttribute->value);
-            $element = $urlAttribute->parentNode->tagName;
+            $element = \strtolower($urlAttribute->parentNode->tagName);
             if (
                 \array_key_exists($name, $this->urlAttributes)
                 && \in_array($element, $this->urlAttributes[$name])
