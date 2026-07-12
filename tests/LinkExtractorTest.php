@@ -2,8 +2,6 @@
 /**
  * Testing if LinkExtractor extracts links.
  *
- * PHP version 7
- *
  * @author    Martijn van der Ven <martijn@vanderven.se>
  * @author    Christian Weiske <cweiske@cweiske.de>
  * @copyright 2017 Martijn van der Ven and authors
@@ -21,10 +19,14 @@ class LinkExtractorTest extends \PHPUnit\Framework\TestCase
     /**
      * @dataProvider filesProvider
      */
-    public function testExtract($dom, $fileUrl, $expectedUrls)
+    public function testExtract($dom, $modernDom, $fileUrl, $expectedUrls)
     {
         $extractor = new LinkExtractor($dom, $fileUrl);
-        $this->assertEquals($expectedUrls, $extractor->extract());
+        $this->assertEquals($expectedUrls, $extractor->extract(), '\DOMDocument');
+        if ($modernDom !== null) {
+            $extractor = new LinkExtractor($modernDom, $fileUrl);
+            $this->assertEquals($expectedUrls, $extractor->extract(), '\Dom\HTMLDocument');
+        }
     }
 
     public function testLinksTo()
@@ -57,6 +59,9 @@ class LinkExtractorTest extends \PHPUnit\Framework\TestCase
         $this->assertTrue($covered, "No fixture exercises {$element}[@{$attribute}].");
     }
 
+    /**
+     * @return array<int, array{0: \DOMDocument, 1: ?\Dom\HTMLDocument, 2: string, 3: string[]}>
+     */
     public static function filesProvider(): array
     {
         static $data;
@@ -73,8 +78,12 @@ class LinkExtractorTest extends \PHPUnit\Framework\TestCase
             $urlfile = substr($htmlfile, 0, -5) . '.url';
             $dom = new \DOMDocument();
             $dom->loadHTMLFile($htmlfile, LIBXML_NOERROR | LIBXML_NOWARNING);
+            $modern = class_exists('\\Dom\\HTMLDocument')
+                ? \Dom\HTMLDocument::createFromFile($htmlfile, LIBXML_NOERROR)
+                : null;
             $data[] = [
                 $dom,
+                $modern,
                 trim(file_get_contents($urlfile)),
                 file($urlsfile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES)
             ];
