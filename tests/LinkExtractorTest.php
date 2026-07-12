@@ -86,7 +86,7 @@ class LinkExtractorTest extends \PHPUnit\Framework\TestCase
     {
         $defaults = (new \ReflectionClass(LinkExtractor::class))->getDefaultProperties();
         $locations = [];
-        foreach (['urlAttributes' => false, 'nonEmptyUrlAttributes' => true] as $property => $needsValue) {
+        foreach (['urlAttributes' => false, 'nonEmptyUrlAttributes' => true, 'spaceSeparatedUrlAttributes' => true] as $property => $needsValue) {
             foreach ($defaults[$property] as $attribute => $elements) {
                 foreach ($elements as $element) {
                     $locations["{$element}[@{$attribute}]"] = [$attribute, $element, $needsValue];
