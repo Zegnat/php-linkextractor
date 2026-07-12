@@ -49,10 +49,10 @@ $ composer require zegnat/linkextractor
 ## Usage
 
 ``` php
-// Parse an HTML file into a DOMDocument somehow, e.g.:
-$dom = new \Zegnat\Html\DOMDocument();
+// Parse the HTML into a DOMDocument:
+$dom = new \DOMDocument();
 $dom->loadHTML(file_get_contents('http://example.com/index.html'));
-// Now initiate the extractor:
+// Initiate the extractor with the document and its URL:
 $extractor = new \Zegnat\LinkExtractor\LinkExtractor($dom, 'http://example.com/index.html');
 var_dump(
     $extractor->linksTo('https://github.com/'),
@@ -64,10 +64,22 @@ bool(true)
 */
 ```
 
+On PHP 8.4 and newer you can instead pass a document parsed with the new 
+`\Dom\HTMLDocument` API and its standards-compliant HTML parser:
+
+``` php
+$dom = \Dom\HTMLDocument::createFromString(
+    file_get_contents('http://example.com/index.html')
+);
+$extractor = new \Zegnat\LinkExtractor\LinkExtractor($dom, 'http://example.com/index.html');
+```
+
 ## Supported PHP versions
 
 This library requires PHP 7.0 or newer and is tested against PHP 7.0, 7.1, 
 7.2, 7.3, 7.4, 8.0, 8.1, 8.2, 8.3 and 8.4.
+
+From PHP 8.4 onwards it accepts both `\DOMNode` and `\Dom\Node`.
 
 ## Testing
 
