@@ -104,7 +104,10 @@ function matrix(
 function coverage(
     #[AsArgument(description: 'PHP version to measure coverage on')]
     string $php = DEFAULT_PHP,
-    #[AsOption(description: 'Minimum percentage of source lines that must be covered')]
+    #[AsOption(
+        description: 'Minimum percentage of source lines that must be covered',
+        mode: InputOption::VALUE_REQUIRED,
+    )]
     float $min = 100.0,
     #[AsOption(description: 'Container runtime to use: podman or docker', mode: InputOption::VALUE_REQUIRED)]
     string $runtime = '',
