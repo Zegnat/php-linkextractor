@@ -83,14 +83,22 @@ From PHP 8.4 onwards it accepts both `\DOMNode` and `\Dom\Node`.
 
 ## Testing
 
-Tests run on every supported PHP version through Docker, orchestrated by 
+Tests run on every supported PHP version in containers, orchestrated by 
 [Castor][castor]. Each PHP version and its dependencies live entirely in their 
-container, so only Docker and Castor are needed on the host:
+container, so only Castor and a container runtime are needed on the host:
 
 ``` bash
 $ castor matrix     # run the whole matrix
 $ castor test 8.4   # run a single version
 $ castor coverage   # run with code coverage and enforce the minimum
+```
+
+Both Podman and Docker work. Whichever of the two is on your `PATH` is used, 
+preferring Podman when both are installed because it needs no root. Pass 
+`--runtime` to any of the tasks to choose explicitly:
+
+``` bash
+$ castor test 8.4 --runtime docker
 ```
 
 Some test fixtures under `tests/files` are copied verbatim from external 
