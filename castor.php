@@ -25,7 +25,7 @@ function test(
     $build = run(
         [
             'docker', 'build', ...$platform, '-f', 'Dockerfile.matrix',
-            '--build-arg', "PHP_VERSION={$php}", '-t', $tag, '.',
+            '--build-arg', "TARGET_PHP={$php}", '-t', $tag, '.',
         ],
         context()->withAllowFailure(true),
     );
@@ -69,7 +69,7 @@ function coverage(
     $build = run(
         [
             'docker', 'build', '-f', 'Dockerfile.matrix', '--build-arg',
-            "PHP_VERSION={$php}", '--build-arg', 'WITH_COVERAGE=1', '-t', $tag, '.',
+            "TARGET_PHP={$php}", '--build-arg', 'WITH_COVERAGE=1', '-t', $tag, '.',
         ],
         context()->withAllowFailure(true),
     );

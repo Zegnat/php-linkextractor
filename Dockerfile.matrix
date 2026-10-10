@@ -2,9 +2,9 @@
 # Parametrised so the Makefile can sweep the whole matrix.
 #
 # Example:
-#   docker build -f Dockerfile.matrix --build-arg PHP_VERSION=8.4 -t lex:8.4 .
-#   docker run --rm lex:8.4
-ARG PHP_VERSION=8.3
+#   podman build -f Dockerfile.matrix --build-arg TARGET_PHP=8.4 -t lex:8.4 .
+#   podman run --rm lex:8.4
+ARG TARGET_PHP=8.3
 
 # Resolve dependencies in the Composer image (Alpine, ships git + unzip) but
 # resolve *as if* running on the target PHP version via `platform.php`. This
@@ -15,13 +15,13 @@ ARG PHP_VERSION=8.3
 # Pinned: composer:2 (latest) currently ships PHP 8.5, which has a dependency
 # resolver regression that fails to back off to older majors for low platform.php.
 FROM composer:2.7 AS deps
-ARG PHP_VERSION
+ARG TARGET_PHP
 WORKDIR /app
 COPY composer.json ./
-RUN composer config platform.php "${PHP_VERSION}.0" \
+RUN composer config platform.php "${TARGET_PHP}.0" \
     && composer update --no-interaction --prefer-stable --ignore-platform-req=ext-*
 
-FROM php:${PHP_VERSION}-cli
+FROM php:${TARGET_PHP}-cli
 ARG WITH_COVERAGE=
 WORKDIR /app
 COPY . .
