@@ -4,5 +4,11 @@
 /.dockerignore      export-ignore
 /Dockerfile.matrix  export-ignore
 /castor.php         export-ignore
+/CREDITS.md         export-ignore
 /phpunit.xml.dist   export-ignore
 /tests              export-ignore
+
+# The fixtures these cover are not exported, so their licences need not be.
+/LICENSES/Apache-2.0.txt    export-ignore
+/LICENSES/BSD-3-Clause.txt  export-ignore
+/LICENSES/CC0-1.0.txt       export-ignore
