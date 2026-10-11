@@ -101,6 +101,30 @@ class LinkExtractor
     }
 
     /**
+     * Pick the XPath processor to query the document with.
+     *
+     * @param \DOMDocument|\Dom\Document $ownerDocument
+     * @param null|\DOMXPath|\Dom\XPath  $xpath
+     * @param bool                       $modernParser
+     *
+     * @return \DOMXPath|\Dom\XPath
+     **/
+    private function resolveXPath($ownerDocument, $xpath, bool $modernParser)
+    {
+        $expected = $modernParser ? '\\Dom\\XPath' : '\\DOMXPath';
+        if ($xpath === null) {
+            return new $expected($ownerDocument);
+        }
+        if (!$xpath instanceof $expected) {
+            throw new \TypeError(\sprintf('$xpath must be a %s.', $expected));
+        }
+        if ($xpath->document !== $ownerDocument) {
+            throw new \ValueError('$xpath must have been created for the document $root belongs to.');
+        }
+        return $xpath;
+    }
+
+    /**
      * Construct the extractor.
      *
      * The extractor can run on the DOM for the entire document, but can also be limited to only look for links within
@@ -110,15 +134,19 @@ class LinkExtractor
      * Even if a sub element of the document is supplied, it will still apply any BASE elements from th entire document
      * for the purpose of resolving relative URLs.
      *
-     * @param \DOMNode|\Dom\Node $root    Any node, including a whole document, to use as root.
-     * @param string             $baseUrl The URL for the document, to resolve relative URLs against.
+     * @param \DOMNode|\Dom\Node        $root    Any node, including a whole document, to use as root.
+     * @param string                    $baseUrl The URL for the document, to resolve relative URLs against.
+     * @param null|\DOMXPath|\Dom\XPath $xpath   The processor to query the document with, NULL to create one.
      *
      * @throws \TypeError If $root is neither a \DOMNode nor a \Dom\Node.
+     * @throws \TypeError If $xpath is not of the XPath class matching the DOM API of $root.
+     * @throws \ValueError If $xpath was not created for the document $root belongs to.
+     * @throws \InvalidArgumentException If $baseUrl could not be parsed as a valid URI.
      * @throws \InvalidArgumentException If the BASE element’s HREF could not be parsed as a valid URI.
      *
      * @api
      **/
-    public function __construct($root, string $baseUrl = '')
+    public function __construct($root, string $baseUrl = '', $xpath = null)
     {
         $modernParser = \class_exists('\\Dom\\Node') && $root instanceof \Dom\Node;
         if (!$root instanceof \DOMNode && !$modernParser) {
@@ -126,7 +154,7 @@ class LinkExtractor
         }
         $this->root = $root;
         $ownerDocument = $root->ownerDocument ?? $root;
-        $this->xpath = $modernParser ? new \Dom\XPath($ownerDocument) : new \DOMXPath($ownerDocument);
+        $this->xpath = $this->resolveXPath($ownerDocument, $xpath, $modernParser);
         $baseUrl = new Uri($baseUrl);
 
         // Update the base URL in case a BASE element was provided.
