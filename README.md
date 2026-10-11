@@ -106,9 +106,14 @@ open-source projects under their respective licenses; see [CREDITS.md](CREDITS.m
 for their sources and the `LICENSES` directory ([REUSE][reuse]).
 
 [castor]: https://castor.jolicode.com/
-[reuse]: https://reuse.software/
 
 ## License
 
 The BSD Zero Clause License (0BSD). Please see the LICENSE file for more 
 information.
+
+Files under [`vendored/`](vendored) are copied from other projects and keep 
+their own licenses. Each one has a `.license` sidecar naming its copyright and 
+license, with the full text in [`LICENSES/`](LICENSES) ([REUSE][reuse]).
+
+[reuse]: https://reuse.software/

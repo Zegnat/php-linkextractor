@@ -18,6 +18,7 @@ FROM composer:2.7 AS deps
 ARG TARGET_PHP
 WORKDIR /app
 COPY composer.json ./
+COPY vendored ./vendored
 RUN composer config platform.php "${TARGET_PHP}.0" \
     && composer update --no-interaction --prefer-stable --ignore-platform-req=ext-*
 
