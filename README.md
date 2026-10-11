@@ -74,6 +74,12 @@ $dom = \Dom\HTMLDocument::createFromString(
 $extractor = new \Zegnat\LinkExtractor\LinkExtractor($dom, 'http://example.com/index.html');
 ```
 
+### Supplying your own XPath
+
+An optional third constructor argument takes an already created `\DOMXPath` 
+or `\Dom\XPath` instance for the same document. If none is given, one will be 
+created.
+
 ## Supported PHP versions
 
 This library requires PHP 7.0 or newer and is tested against PHP 7.0, 7.1, 
