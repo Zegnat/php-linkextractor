@@ -8,6 +8,7 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Process\ExecutableFinder;
 
 use function Castor\context;
+use function Castor\fs;
 use function Castor\io;
 use function Castor\run;
 
@@ -45,6 +46,31 @@ function container_runtime(string $override = ''): string
     throw new ProblemException(sprintf('No container runtime found: install %s.', $either));
 }
 
+/**
+ * Build the matrix image, returning its ID or the exit code of a failed build.
+ *
+ * Untagged on purpose: a tag is a mutable name shared by every checkout using
+ * the same image store, so concurrent builds overwrite each other's.
+ */
+function build_image(string $engine, array $arguments): string|int
+{
+    $file = fs()->tempnam(sys_get_temp_dir(), 'linkextractor-iid-');
+
+    try {
+        $build = run(
+            [$engine, 'build', ...$arguments, '-f', 'Dockerfile.matrix', '--iidfile', $file, '.'],
+            context()->withAllowFailure(true),
+        );
+        if (!$build->isSuccessful()) {
+            return $build->getExitCode();
+        }
+
+        return trim(fs()->readFile($file));
+    } finally {
+        fs()->remove($file);
+    }
+}
+
 #[AsTask(description: 'Run the test suite on a single PHP version')]
 function test(
     #[AsArgument(description: 'PHP version to test, e.g. 8.4')]
@@ -58,20 +84,14 @@ function test(
     $platform = \in_array($php, ['7.0', '7.1', '7.2', '7.3'], true)
         ? ['--platform', 'linux/amd64']
         : [];
-    $tag = "linkextractor-test:{$php}";
 
-    $build = run(
-        [
-            $engine, 'build', ...$platform, '-f', 'Dockerfile.matrix',
-            '--build-arg', "TARGET_PHP={$php}", '-t', $tag, '.',
-        ],
-        context()->withAllowFailure(true),
-    );
-    if (!$build->isSuccessful()) {
-        return $build->getExitCode();
+    $image = build_image($engine, [...$platform, '--build-arg', "TARGET_PHP={$php}"]);
+    // Pass on the exit code of a failed build.
+    if (\is_int($image)) {
+        return $image;
     }
 
-    return run([$engine, 'run', '--rm', ...$platform, $tag], context()->withAllowFailure(true))->getExitCode();
+    return run([$engine, 'run', '--rm', ...$platform, $image], context()->withAllowFailure(true))->getExitCode();
 }
 
 #[AsTask(description: 'Run the test suite across every supported PHP version')]
@@ -114,16 +134,10 @@ function coverage(
 ): int {
     $engine = container_runtime($runtime);
 
-    $tag = "linkextractor-coverage:{$php}";
-    $build = run(
-        [
-            $engine, 'build', '-f', 'Dockerfile.matrix', '--build-arg',
-            "TARGET_PHP={$php}", '--build-arg', 'WITH_COVERAGE=1', '-t', $tag, '.',
-        ],
-        context()->withAllowFailure(true),
-    );
-    if (!$build->isSuccessful()) {
-        return $build->getExitCode();
+    $image = build_image($engine, ['--build-arg', "TARGET_PHP={$php}", '--build-arg', 'WITH_COVERAGE=1']);
+    // Pass on the exit code of a failed build.
+    if (\is_int($image)) {
+        return $image;
     }
 
     // PHPUnit has no built-in coverage threshold; enforce the minimum from the Clover report.
@@ -134,7 +148,7 @@ function coverage(
 
     return run(
         [
-            $engine, 'run', '--rm', $tag, 'sh', '-c',
+            $engine, 'run', '--rm', $image, 'sh', '-c',
             'vendor/bin/phpunit --coverage-text --coverage-clover /tmp/clover.xml --coverage-filter src'
                 . " && php -r '{$check}'",
         ],
