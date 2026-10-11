@@ -3,7 +3,7 @@
     "description": "A package that tries to figure out what resources an HTML document links to.",
     "version": "0.3.0",
     "type": "library",
-    "license": "0BSD",
+    "license": "(0BSD and MIT)",
     "authors": [
         {
             "name": "Martijn van der Ven",
@@ -17,7 +17,10 @@
     "autoload": {
         "psr-4": {
             "Zegnat\\LinkExtractor\\": "src/"
-        }
+        },
+        "classmap": [
+            "vendored/"
+        ]
     },
     "require-dev": {
         "phpunit/phpunit": "^6.5 || ^7.5 || ^8.5 || ^9.6",

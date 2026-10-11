@@ -22,6 +22,69 @@ class LinkExtractorTest extends \PHPUnit\Framework\TestCase
         new LinkExtractor('not a DOM node');
     }
 
+    public function testConstructorRejectsNonXPath()
+    {
+        $this->expectException(\TypeError::class);
+        new LinkExtractor(new \DOMDocument(), '', new \stdClass());
+    }
+
+    public function testConstructorRejectsXPathForAnotherDocument()
+    {
+        $this->expectException(\ValueError::class);
+        new LinkExtractor(new \DOMDocument(), '', new \DOMXPath(new \DOMDocument()));
+    }
+
+    public function testConstructorUsesSuppliedXPath()
+    {
+        $dom = new \DOMDocument();
+        $dom->loadHTMLFile(__DIR__ . '/files/example.com-index.html', LIBXML_NOERROR | LIBXML_NOWARNING);
+        $xpath = new \DOMXPath($dom);
+        $extractor = new LinkExtractor($dom, 'http://example.com/index.html', $xpath);
+        $this->assertSame($xpath, self::extractorXPath($extractor));
+        $this->assertTrue($extractor->linksTo('http://www.iana.org/domains/example'));
+    }
+
+    public function testConstructorUsesSuppliedXPathForAnElementRoot()
+    {
+        $dom = new \DOMDocument();
+        $dom->loadHTML('<div><a href="/in">in</a></div><a href="/out">out</a>', LIBXML_NOERROR | LIBXML_NOWARNING);
+        $div = $dom->getElementsByTagName('div')->item(0);
+        $extractor = new LinkExtractor($div, 'http://zegnat.example/', new \DOMXPath($dom));
+        $this->assertSame(['http://zegnat.example/in'], $extractor->extract());
+    }
+
+    public function testConstructorUsesSuppliedXPathModern()
+    {
+        if (!class_exists('\\Dom\\HTMLDocument')) {
+            $this->markTestSkipped('Modern \Dom\HTMLDocument not available.');
+        }
+        $dom = \Dom\HTMLDocument::createFromFile(__DIR__ . '/files/example.com-index.html', LIBXML_NOERROR);
+        $xpath = new \Dom\XPath($dom);
+        $extractor = new LinkExtractor($dom, 'http://example.com/index.html', $xpath);
+        $this->assertSame($xpath, self::extractorXPath($extractor));
+        $this->assertTrue($extractor->linksTo('http://www.iana.org/domains/example'));
+    }
+
+    public function testConstructorRejectsLegacyXPathForModernRoot()
+    {
+        if (!class_exists('\\Dom\\HTMLDocument')) {
+            $this->markTestSkipped('Modern \Dom\HTMLDocument not available.');
+        }
+        $dom = \Dom\HTMLDocument::createFromString('<!DOCTYPE html><title>t</title>', LIBXML_NOERROR);
+        $this->expectException(\TypeError::class);
+        new LinkExtractor($dom, '', new \DOMXPath(new \DOMDocument()));
+    }
+
+    /**
+     * @return \DOMXPath|\Dom\XPath The processor the extractor ended up querying with.
+     */
+    private static function extractorXPath(LinkExtractor $extractor)
+    {
+        $property = new \ReflectionProperty(LinkExtractor::class, 'xpath');
+        $property->setAccessible(true);
+        return $property->getValue($extractor);
+    }
+
     /**
      * @dataProvider filesProvider
      */
