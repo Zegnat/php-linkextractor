@@ -123,6 +123,34 @@ class LinkExtractorTest extends \PHPUnit\Framework\TestCase
     }
 
     /**
+     * Resolve a reference against a base URL, through a document holding a single link.
+     *
+     * @param string $reference
+     * @param string $expected
+     * @param string $baseUrl
+     *
+     * @return void
+     **/
+    private function assertResolves(string $reference, string $expected, string $baseUrl)
+    {
+        $dom = new \DOMDocument();
+        $dom->loadHTML(
+            '<!doctype html><a href="' . \htmlspecialchars($reference, ENT_QUOTES) . '">link</a>',
+            LIBXML_NOERROR | LIBXML_NOWARNING
+        );
+        $extractor = new LinkExtractor($dom, $baseUrl);
+        $this->assertSame([$expected], $extractor->extract(), "Resolving '{$reference}'.");
+    }
+
+    /**
+     * @dataProvider rfc3986ReferenceProvider
+     */
+    public function testResolvesTheReferenceExamplesFromRfc3986($reference, $expected)
+    {
+        $this->assertResolves($reference, $expected, 'http://a/b/c/d;p?q');
+    }
+
+    /**
      * @dataProvider linkLocationProvider
      */
     public function testLinkLocationIsExercisedByAFixture($attribute, $element, $needsValue)
@@ -139,6 +167,72 @@ class LinkExtractorTest extends \PHPUnit\Framework\TestCase
         }
 
         $this->assertTrue($covered, "No fixture exercises {$element}[@{$attribute}].");
+    }
+
+    /**
+     * Every reference resolution example the URI specification lists, against its own base URL.
+     *
+     * The abnormal example “http:g” is given two results. This library is a strict parser, so it
+     * keeps the reference as written rather than taking the backward compatible reading.
+     *
+     * @return array<string, array{0: string, 1: string}>
+     *
+     * @see https://www.rfc-editor.org/rfc/rfc3986.html#section-5.4 Reference resolution examples.
+     **/
+    public static function rfc3986ReferenceProvider(): array
+    {
+        $examples = [
+            // 5.4.1. Normal Examples
+            ['g:h', 'g:h'],
+            ['g', 'http://a/b/c/g'],
+            ['./g', 'http://a/b/c/g'],
+            ['g/', 'http://a/b/c/g/'],
+            ['/g', 'http://a/g'],
+            ['//g', 'http://g'],
+            ['?y', 'http://a/b/c/d;p?y'],
+            ['g?y', 'http://a/b/c/g?y'],
+            ['#s', 'http://a/b/c/d;p?q#s'],
+            ['g#s', 'http://a/b/c/g#s'],
+            ['g?y#s', 'http://a/b/c/g?y#s'],
+            [';x', 'http://a/b/c/;x'],
+            ['g;x', 'http://a/b/c/g;x'],
+            ['g;x?y#s', 'http://a/b/c/g;x?y#s'],
+            ['', 'http://a/b/c/d;p?q'],
+            ['.', 'http://a/b/c/'],
+            ['./', 'http://a/b/c/'],
+            ['..', 'http://a/b/'],
+            ['../', 'http://a/b/'],
+            ['../g', 'http://a/b/g'],
+            ['../..', 'http://a/'],
+            ['../../', 'http://a/'],
+            ['../../g', 'http://a/g'],
+            // 5.4.2. Abnormal Examples
+            ['../../../g', 'http://a/g'],
+            ['../../../../g', 'http://a/g'],
+            ['/./g', 'http://a/g'],
+            ['/../g', 'http://a/g'],
+            ['g.', 'http://a/b/c/g.'],
+            ['.g', 'http://a/b/c/.g'],
+            ['g..', 'http://a/b/c/g..'],
+            ['..g', 'http://a/b/c/..g'],
+            ['./../g', 'http://a/b/g'],
+            ['./g/.', 'http://a/b/c/g/'],
+            ['g/./h', 'http://a/b/c/g/h'],
+            ['g/../h', 'http://a/b/c/h'],
+            ['g;x=1/./y', 'http://a/b/c/g;x=1/y'],
+            ['g;x=1/../y', 'http://a/b/c/y'],
+            ['g?y/./x', 'http://a/b/c/g?y/./x'],
+            ['g?y/../x', 'http://a/b/c/g?y/../x'],
+            ['g#s/./x', 'http://a/b/c/g#s/./x'],
+            ['g#s/../x', 'http://a/b/c/g#s/../x'],
+            ['http:g', 'http:g'],
+        ];
+
+        $cases = [];
+        foreach ($examples as $example) {
+            $cases['' === $example[0] ? 'the empty reference' : $example[0]] = $example;
+        }
+        return $cases;
     }
 
     /**
