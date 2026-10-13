@@ -151,6 +151,26 @@ class LinkExtractorTest extends \PHPUnit\Framework\TestCase
     }
 
     /**
+     * @dataProvider omittedReferenceProvider
+     */
+    public function testResolvesReferenceShapesTheExamplesOmit($reference, $expected)
+    {
+        $this->assertResolves($reference, $expected, 'http://a/b/c/d;p?q');
+    }
+
+    /**
+     * A scheme trailed by at most five digits is read as a host and a port by parse_url(), which
+     * leaves Guzzle reporting no scheme at all. Such a reference is absolute and the document it
+     * was found in must play no part in it.
+     *
+     * @see https://bugs.php.net/bug.php?id=70588 The report, closed without a fix.
+     **/
+    public function testKeepsASchemeThatParseUrlReadsAsAPort()
+    {
+        $this->assertResolves('tel:12345', 'tel:12345', 'http://a/b/c/d;p?q');
+    }
+
+    /**
      * @dataProvider linkLocationProvider
      */
     public function testLinkLocationIsExercisedByAFixture($attribute, $element, $needsValue)
@@ -233,6 +253,24 @@ class LinkExtractorTest extends \PHPUnit\Framework\TestCase
             $cases['' === $example[0] ? 'the empty reference' : $example[0]] = $example;
         }
         return $cases;
+    }
+
+    /**
+     * Reference shapes the specification defines in its grammar but leaves out of its examples.
+     *
+     * @return array<string, array{0: string, 1: string}>
+     *
+     * @see https://www.rfc-editor.org/rfc/rfc3986.html#section-3.1 A scheme may hold “+”, “-” and “.”.
+     * @see https://www.rfc-editor.org/rfc/rfc3986.html#section-5.2.2 Dot segments go even with a scheme.
+     * @see https://www.rfc-editor.org/rfc/rfc3986.html#section-3.3 Only the first segment may hold no colon.
+     **/
+    public static function omittedReferenceProvider(): array
+    {
+        return [
+            'a scheme holding a plus' => ['coap+tcp://a/resource', 'coap+tcp://a/resource'],
+            'dot segments under a scheme' => ['http://a/b/../c/./d', 'http://a/c/d'],
+            'a colon in a later segment' => ['g/h:i', 'http://a/b/c/g/h:i'],
+        ];
     }
 
     /**
