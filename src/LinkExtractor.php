@@ -31,6 +31,7 @@ class LinkExtractor
      *
      * @var array $urlAttributes
      * @var array $nonEmptyUrlAttributes These treat empty values as invalid.
+     * @var array $imageCandidateUrlAttributes These hold image candidate strings, parsed by SrcsetParser.
      * @see https://html.spec.whatwg.org/multipage/indices.html#attributes-3 Data source
      **/
     private $urlAttributes = [
@@ -48,6 +49,10 @@ class LinkExtractor
     ];
     private $spaceSeparatedUrlAttributes = [
         'ping' => ['a', 'area'],
+    ];
+    private $imageCandidateUrlAttributes = [
+        'imagesrcset' => ['link'],
+        'srcset' => ['img', 'source'],
     ];
 
     /**
@@ -219,7 +224,8 @@ class LinkExtractor
                 \array_unique(\array_merge(
                     \array_keys($this->urlAttributes),
                     \array_keys($this->nonEmptyUrlAttributes),
-                    \array_keys($this->spaceSeparatedUrlAttributes)
+                    \array_keys($this->spaceSeparatedUrlAttributes),
+                    \array_keys($this->imageCandidateUrlAttributes)
                 )),
                 function (string $xpath, string $attribute): string {
                     return $xpath . ' | .//@' . $attribute;
@@ -251,6 +257,13 @@ class LinkExtractor
             ) {
                 foreach (\preg_split('@[' . $this->htmlSpaceCharacters . ']+@', $url, -1, PREG_SPLIT_NO_EMPTY) as $singleUrl) {
                     $links[] = $singleUrl;
+                }
+            } elseif (
+                \array_key_exists($name, $this->imageCandidateUrlAttributes)
+                && \in_array($element, $this->imageCandidateUrlAttributes[$name])
+            ) {
+                foreach (SrcsetParser::parse($url) as $candidate) {
+                    $links[] = $candidate['url'];
                 }
             }
         }

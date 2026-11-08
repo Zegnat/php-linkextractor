@@ -80,6 +80,29 @@ An optional third constructor argument takes an already created `\DOMXPath`
 or `\Dom\XPath` instance for the same document. If none is given, one will be 
 created.
 
+## Parsing a srcset attribute on its own
+
+A `srcset` attribute does not hold URLs, it holds a comma-separated list of 
+image candidate strings. The parser the LinkExtractor uses for them is a 
+public class of its own, so it can be used without the rest of this library:
+
+``` php
+use Zegnat\LinkExtractor\SrcsetParser;
+
+$candidates = SrcsetParser::parse('small.png, large.png 2x, broken.png 1x 2x');
+/*
+[
+    ['url' => 'small.png', 'width' => null, 'density' => null],
+    ['url' => 'large.png', 'width' => null, 'density' => 2.0],
+]
+*/
+```
+
+URLs are returned exactly as they were written, as the parser does not know 
+what document they came from; resolve them yourself. Image candidates the HTML 
+Standard rejects are left out, which is why `broken.png` is missing above: a 
+candidate cannot carry two pixel density descriptors.
+
 ## Supported PHP versions
 
 This library requires PHP 7.0 or newer and is tested against PHP 7.0, 7.1, 

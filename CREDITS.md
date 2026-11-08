@@ -1,6 +1,7 @@
 # Credits
 
-Several test fixtures under `tests/files/` are copied verbatim from external
+Several test fixtures under `tests/files/`, and the upstream suite under
+`tests/wpt/`, are copied verbatim from external
 open-source projects under their respective licenses (tracked per file by the
 `.license` sidecars and the `LICENSES/` directory, [REUSE](https://reuse.software/)).
 This records where each came from.
@@ -21,6 +22,8 @@ This records where each came from.
 - `wpt-ins-cite.html` — [ins/cite-isvalid.html](https://github.com/web-platform-tests/wpt/blob/master/conformance-checkers/html/elements/ins/cite-isvalid.html)
 - `wpt-button-formaction.html` — [button/formaction-isvalid.html](https://github.com/web-platform-tests/wpt/blob/master/conformance-checkers/html/elements/button/formaction-isvalid.html)
 - `wpt-input-formaction.html` — [input/type-submit-formaction-isvalid.html](https://github.com/web-platform-tests/wpt/blob/master/conformance-checkers/html/elements/input/type-submit-formaction-isvalid.html)
+- `wpt-link-imagesrcset.html` — [link/imagesrcset-valid.html](https://github.com/web-platform-tests/wpt/blob/master/conformance-checkers/html/elements/link/imagesrcset-valid.html)
+- `tests/wpt/parse-a-srcset-attribute.html` — [srcset/parse-a-srcset-attribute.html](https://github.com/web-platform-tests/wpt/blob/master/html/semantics/embedded-content/the-img-element/srcset/parse-a-srcset-attribute.html), read as data by `SrcsetParserTest` rather than extracted from
 
 ## WHATWG HTML Standard — CC-BY-4.0 prose / BSD-3-Clause code
 
