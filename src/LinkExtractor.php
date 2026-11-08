@@ -51,6 +51,7 @@ class LinkExtractor
         'ping' => ['a', 'area'],
     ];
     private $imageCandidateUrlAttributes = [
+        'imagesrcset' => ['link'],
         'srcset' => ['img', 'source'],
     ];
 
