@@ -58,6 +58,18 @@ class LinkExtractor
      **/
     private $htmlSpaceCharacters = ' \t\n\f\r';
 
+    /**
+     * Pattern capturing the scheme, and everything that follows it, of an absolute URI reference.
+     *
+     * A relative-path reference can never hold a colon in its first path segment. A reference that opens with the
+     * scheme production is therefore always a reference that carries its own scheme.
+     *
+     * @var string $schemePattern
+     * @see https://www.rfc-editor.org/rfc/rfc3986.html#section-3.1 scheme = ALPHA *( ALPHA / DIGIT / "+" / "-" / "." )
+     * @see https://www.rfc-editor.org/rfc/rfc3986.html#section-3.3 On the first segment of a relative-path reference.
+     **/
+    private $schemePattern = '@^([A-Za-z][A-Za-z0-9+.-]*):(.*)@s';
+
     /** @var \DOMNode|\Dom\Node $root */
     private $root;
 
@@ -85,16 +97,37 @@ class LinkExtractor
     }
 
     /**
-     * Resolve a relative URL to the current base URL.
+     * Resolve a URL reference against the current base URL.
+     *
+     * A reference that carries its own scheme is already absolute, so the base URL plays no part in it. It still
+     * goes through Uri: section 5.2.2 removes the dot segments from its path, and Uri normalises the result the
+     * way the rest of this library does. A reference that cannot be parsed as a URI comes back untouched.
+     *
+     * Uri leans on parse_url(), which recognises an authority where RFC 3986 allows none: it reads “a.com:80” as
+     * a host and a port instead of a scheme and a path, hiding the scheme of a reference like “tel:12345”. PHP
+     * declined to change that and shipped a compliant parser in 8.5 instead, out of reach of both PHP 7.0 and
+     * Guzzle, so the scheme matched here takes precedence over the one Uri reports.
      *
      * @param string $url
      *
      * @return string
+     *
+     * @see https://www.rfc-editor.org/rfc/rfc3986.html#section-5.2.2 The transform references algorithm.
+     * @see https://bugs.php.net/bug.php?id=70588 parse_url() reading “tel:12345” as a host and a port.
+     * @see https://wiki.php.net/rfc/url_parsing_api The compliant parser PHP 8.5 added instead.
      **/
     private function resolveUrl(string $url): string
     {
         try {
-            return \strval(UriResolver::resolve($this->baseUrl, new Uri($url)));
+            if (\preg_match($this->schemePattern, $url, $reference) !== 1) {
+                return \strval(UriResolver::resolve($this->baseUrl, new Uri($url)));
+            }
+            $uri = new Uri($url);
+            if ($uri->getScheme() === '') {
+                // Uri found no scheme, but the pattern did: rebuild the URI from the matched scheme.
+                $uri = (new Uri($reference[2]))->withScheme($reference[1]);
+            }
+            return \strval($uri->withPath(UriResolver::removeDotSegments($uri->getPath())));
         } catch (\InvalidArgumentException $e) {
             return $url;
         }
