@@ -122,6 +122,24 @@ class LinkExtractorTest extends \PHPUnit\Framework\TestCase
         $this->assertFalse($extractor->linksTo(':'));
     }
 
+    public function testManifestIsNotAffectedByBaseWithoutDocumentUrl()
+    {
+        $dom = new \DOMDocument();
+        $dom->loadHTMLFile(
+            __DIR__ . '/files/example.com-manifest-with-base.html',
+            LIBXML_NOERROR | LIBXML_NOWARNING
+        );
+        $extractor = new LinkExtractor($dom);
+        $this->assertEquals(
+            [
+                'offline.appcache',
+                'https://cdn.example.com/assets/',
+                'https://cdn.example.com/assets/archives.html'
+            ],
+            $extractor->extract()
+        );
+    }
+
     /**
      * Resolve a reference against a base URL, through a document holding a single link.
      *
