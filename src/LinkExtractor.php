@@ -81,6 +81,9 @@ class LinkExtractor
     /** @var \DOMXPath|\Dom\XPath $xpath */
     private $xpath;
 
+    /** @var Uri $documentUrl The document URL, without any BASE element applied to it. */
+    private $documentUrl;
+
     /** @var Uri $baseUrl */
     private $baseUrl;
 
@@ -102,7 +105,7 @@ class LinkExtractor
     }
 
     /**
-     * Resolve a URL reference against the current base URL.
+     * Resolve a URL reference against a base URL.
      *
      * A reference that carries its own scheme is already absolute, so the base URL plays no part in it. It still
      * goes through Uri: section 5.2.2 removes the dot segments from its path, and Uri normalises the result the
@@ -114,6 +117,7 @@ class LinkExtractor
      * Guzzle, so the scheme matched here takes precedence over the one Uri reports.
      *
      * @param string $url
+     * @param Uri    $baseUrl The URL to resolve against.
      *
      * @return string
      *
@@ -121,11 +125,11 @@ class LinkExtractor
      * @see https://bugs.php.net/bug.php?id=70588 parse_url() reading “tel:12345” as a host and a port.
      * @see https://wiki.php.net/rfc/url_parsing_api The compliant parser PHP 8.5 added instead.
      **/
-    private function resolveUrl(string $url): string
+    private function resolveUrl(string $url, Uri $baseUrl): string
     {
         try {
             if (\preg_match($this->schemePattern, $url, $reference) !== 1) {
-                return \strval(UriResolver::resolve($this->baseUrl, new Uri($url)));
+                return \strval(UriResolver::resolve($baseUrl, new Uri($url)));
             }
             $uri = new Uri($url);
             if ($uri->getScheme() === '') {
@@ -193,7 +197,8 @@ class LinkExtractor
         $this->root = $root;
         $ownerDocument = $root->ownerDocument ?? $root;
         $this->xpath = $this->resolveXPath($ownerDocument, $xpath, $modernParser);
-        $baseUrl = new Uri($baseUrl);
+        $this->documentUrl = new Uri($baseUrl);
+        $baseUrl = $this->documentUrl;
 
         // Update the base URL in case a BASE element was provided.
         // We are not going to care about the validity of the location of the BASE element.
@@ -240,37 +245,36 @@ class LinkExtractor
             $name = $urlAttribute->name;
             $url = $this->htmlStripWhitespace($urlAttribute->value);
             $element = \strtolower($urlAttribute->parentNode->tagName);
+            // The parser resolves MANIFEST before any BASE element has been seen, so BASE can never affect it.
+            $baseUrl = ($name === 'manifest' && $element === 'html') ? $this->documentUrl : $this->baseUrl;
             if (
                 \array_key_exists($name, $this->urlAttributes)
                 && \in_array($element, $this->urlAttributes[$name])
             ) {
-                $links[] = $url;
+                $links[] = $this->resolveUrl($url, $baseUrl);
             } elseif (
                 \array_key_exists($name, $this->nonEmptyUrlAttributes)
                 && \in_array($element, $this->nonEmptyUrlAttributes[$name])
                 && \strlen($url) > 0
             ) {
-                $links[] = $url;
+                $links[] = $this->resolveUrl($url, $baseUrl);
             } elseif (
                 \array_key_exists($name, $this->spaceSeparatedUrlAttributes)
                 && \in_array($element, $this->spaceSeparatedUrlAttributes[$name])
             ) {
                 foreach (\preg_split('@[' . $this->htmlSpaceCharacters . ']+@', $url, -1, PREG_SPLIT_NO_EMPTY) as $singleUrl) {
-                    $links[] = $singleUrl;
+                    $links[] = $this->resolveUrl($singleUrl, $baseUrl);
                 }
             } elseif (
                 \array_key_exists($name, $this->imageCandidateUrlAttributes)
                 && \in_array($element, $this->imageCandidateUrlAttributes[$name])
             ) {
                 foreach (SrcsetParser::parse($url) as $candidate) {
-                    $links[] = $candidate['url'];
+                    $links[] = $this->resolveUrl($candidate['url'], $baseUrl);
                 }
             }
         }
-        $this->extracted = \array_map(
-            [$this, 'resolveUrl'],
-            $links
-        );
+        $this->extracted = $links;
         return $this->extracted;
     }
 
@@ -285,6 +289,6 @@ class LinkExtractor
      **/
     public function linksTo(string $url): bool
     {
-        return \in_array($this->resolveUrl($url), $this->extract());
+        return \in_array($this->resolveUrl($url, $this->baseUrl), $this->extract());
     }
 }
