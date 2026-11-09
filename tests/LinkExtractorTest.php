@@ -81,7 +81,10 @@ class LinkExtractorTest extends \PHPUnit\Framework\TestCase
     private static function extractorXPath(LinkExtractor $extractor)
     {
         $property = new \ReflectionProperty(LinkExtractor::class, 'xpath');
-        $property->setAccessible(true);
+        // getValue() reads private properties without this since PHP 8.1, and 8.5 deprecates calling it.
+        if (\PHP_VERSION_ID < 80100) {
+            $property->setAccessible(true);
+        }
         return $property->getValue($extractor);
     }
 
