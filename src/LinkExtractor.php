@@ -20,6 +20,7 @@ namespace Zegnat\LinkExtractor;
 
 use GuzzleHttp\Psr7\Uri;
 use GuzzleHttp\Psr7\UriResolver;
+use Psr\Http\Message\UriInterface;
 
 /**
  * LinkExtractor class for finding all linked resources in an HTML document.
@@ -29,15 +30,14 @@ class LinkExtractor
     /**
      * The HTML5 attributes with a URL value, and the elements they can be found on.
      *
-     * @var array $urlAttributes
-     * @var array $nonEmptyUrlAttributes These treat empty values as invalid.
-     * @var array $imageCandidateUrlAttributes These hold image candidate strings, parsed by SrcsetParser.
+     * @var array<string, list<string>> $urlAttributes
      * @see https://html.spec.whatwg.org/multipage/indices.html#attributes-3 Data source
      **/
     private $urlAttributes = [
         'cite' => ['blockquote', 'del', 'ins', 'q'],
         'href' => ['a', 'area', 'base'],
     ];
+    /** @var array<string, list<string>> $nonEmptyUrlAttributes These treat empty values as invalid. */
     private $nonEmptyUrlAttributes = [
         'action' => ['form'],
         'data' => ['object'],
@@ -47,9 +47,14 @@ class LinkExtractor
         'poster' => ['video'],
         'src' => ['audio', 'embed', 'iframe', 'img', 'input', 'script', 'source', 'track', 'video'],
     ];
+    /** @var array<string, list<string>> $spaceSeparatedUrlAttributes */
     private $spaceSeparatedUrlAttributes = [
         'ping' => ['a', 'area'],
     ];
+    /**
+     * @var array<string, list<string>> $imageCandidateUrlAttributes These hold image candidate strings, parsed by
+     *     SrcsetParser.
+     **/
     private $imageCandidateUrlAttributes = [
         'imagesrcset' => ['link'],
         'srcset' => ['img', 'source'],
@@ -84,10 +89,10 @@ class LinkExtractor
     /** @var Uri $documentUrl The document URL, without any BASE element applied to it. */
     private $documentUrl;
 
-    /** @var Uri $baseUrl */
+    /** @var UriInterface $baseUrl */
     private $baseUrl;
 
-    /** @var null|array $extracted */
+    /** @var null|list<string> $extracted */
     private $extracted = null;
 
     /**
@@ -116,8 +121,8 @@ class LinkExtractor
      * declined to change that and shipped a compliant parser in 8.5 instead, out of reach of both PHP 7.0 and
      * Guzzle, so the scheme matched here takes precedence over the one Uri reports.
      *
-     * @param string $url
-     * @param Uri    $baseUrl The URL to resolve against.
+     * @param string       $url
+     * @param UriInterface $baseUrl The URL to resolve against.
      *
      * @return string
      *
@@ -125,7 +130,7 @@ class LinkExtractor
      * @see https://bugs.php.net/bug.php?id=70588 parse_url() reading “tel:12345” as a host and a port.
      * @see https://wiki.php.net/rfc/url_parsing_api The compliant parser PHP 8.5 added instead.
      **/
-    private function resolveUrl(string $url, Uri $baseUrl): string
+    private function resolveUrl(string $url, UriInterface $baseUrl): string
     {
         try {
             if (\preg_match($this->schemePattern, $url, $reference) !== 1) {
@@ -195,6 +200,8 @@ class LinkExtractor
             throw new \TypeError('$root must be a \\DOMNode or a \\Dom\\Node.');
         }
         $this->root = $root;
+        // Only a document has no owner document, so this is always one.
+        /** @var \DOMDocument|\Dom\Document $ownerDocument */
         $ownerDocument = $root->ownerDocument ?? $root;
         $this->xpath = $this->resolveXPath($ownerDocument, $xpath, $modernParser);
         $this->documentUrl = new Uri($baseUrl);
@@ -203,6 +210,7 @@ class LinkExtractor
         // Update the base URL in case a BASE element was provided.
         // We are not going to care about the validity of the location of the BASE element.
         // Match on local-name() because the modern parser adds a namespace.
+        /** @var \DOMNodeList<\DOMElement>|\Dom\NodeList<\Dom\Element>|false $base */
         $base = $this->xpath->query("//*[local-name()='base'][@href]", $root);
         if ($base !== false && $base->length > 0) {
             $baseElementUrl = new Uri($this->htmlStripWhitespace($base->item(0)->getAttribute('href')));
@@ -215,7 +223,7 @@ class LinkExtractor
     /**
      * Get all URLs from the document. These will all have been resolved to the base URL of the document, when possible.
      *
-     * @return array An array of all URLs found in the document.
+     * @return list<string> An array of all URLs found in the document.
      *
      * @api
      **/
@@ -239,12 +247,13 @@ class LinkExtractor
             ),
             3
         );
+        /** @var \DOMNodeList<\DOMAttr>|\Dom\NodeList<\Dom\Attr>|false $urlAttributes */
         $urlAttributes = $this->xpath->query($xpath, $this->root);
         $links = [];
         foreach ($urlAttributes as $urlAttribute) {
             $name = $urlAttribute->name;
             $url = $this->htmlStripWhitespace($urlAttribute->value);
-            $element = \strtolower($urlAttribute->parentNode->tagName);
+            $element = \strtolower($urlAttribute->ownerElement->tagName);
             // The parser resolves MANIFEST before any BASE element has been seen, so BASE can never affect it.
             $baseUrl = ($name === 'manifest' && $element === 'html') ? $this->documentUrl : $this->baseUrl;
             if (

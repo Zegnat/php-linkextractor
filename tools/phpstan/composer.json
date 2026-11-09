@@ -1,0 +1,6 @@
+{
+    "description": "PHPStan, kept out of the main manifest because it does not install on PHP 7.0.",
+    "require": {
+        "phpstan/phpstan": "^2.1"
+    }
+}

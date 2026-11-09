@@ -49,22 +49,24 @@ function container_runtime(string $override = ''): string
 }
 
 /**
- * Build the matrix image, returning its ID or the exit code of a failed build.
+ * Build an image, returning its ID or the exit code of a failed build.
  *
  * Untagged on purpose: a tag is a mutable name shared by every checkout using
  * the same image store, so concurrent builds overwrite each other's.
+ *
+ * @param list<string> $arguments
  */
-function build_image(string $engine, array $arguments): string|int
+function build_image(string $engine, array $arguments, string $dockerfile = 'Dockerfile.matrix'): string|int
 {
     $file = fs()->tempnam(sys_get_temp_dir(), 'linkextractor-iid-');
 
     try {
         $build = run(
-            [$engine, 'build', ...$arguments, '-f', 'Dockerfile.matrix', '--iidfile', $file, '.'],
+            [$engine, 'build', ...$arguments, '-f', $dockerfile, '--iidfile', $file, '.'],
             context()->withAllowFailure(true),
         );
         if (!$build->isSuccessful()) {
-            return $build->getExitCode();
+            return $build->getExitCode() ?? 1;
         }
 
         return trim(fs()->readFile($file));
@@ -93,7 +95,7 @@ function test(
         return $image;
     }
 
-    return run([$engine, 'run', '--rm', ...$platform, $image], context()->withAllowFailure(true))->getExitCode();
+    return run([$engine, 'run', '--rm', ...$platform, $image], context()->withAllowFailure(true))->getExitCode() ?? 1;
 }
 
 #[AsTask(description: 'Run the test suite across every supported PHP version')]
@@ -155,5 +157,30 @@ function coverage(
                 . " && php -r '{$check}'",
         ],
         context()->withAllowFailure(true),
-    )->getExitCode();
+    )->getExitCode() ?? 1;
+}
+
+#[AsTask(description: 'Run PHPStan over the library and castor.php')]
+function analyse(
+    #[AsOption(description: 'Container runtime to use: podman or docker', mode: InputOption::VALUE_REQUIRED)]
+    string $runtime = '',
+): int {
+    $engine = container_runtime($runtime);
+
+    $image = build_image($engine, [], 'Dockerfile.phpstan');
+    // Pass on the exit code of a failed build.
+    if (\is_int($image)) {
+        return $image;
+    }
+
+    // castor.php runs on Castor's PHP 8, not the library's PHP 7.0 floor, so it gets its own configuration.
+    $exitCode = 0;
+    foreach (['phpstan.neon.dist', 'phpstan-castor.neon.dist'] as $configuration) {
+        $exitCode = run(
+            [$engine, 'run', '--rm', $image, 'tools/phpstan/vendor/bin/phpstan', 'analyse', '-c', $configuration],
+            context()->withAllowFailure(true),
+        )->getExitCode() ?: $exitCode;
+    }
+
+    return $exitCode;
 }
