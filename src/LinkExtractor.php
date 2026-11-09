@@ -1,4 +1,5 @@
 <?php
+
 /**
  * The LinkExtractor tries to figure out what resources an HTML document links to.
  *

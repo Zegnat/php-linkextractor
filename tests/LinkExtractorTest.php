@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Testing if LinkExtractor extracts links.
  *
@@ -137,7 +138,7 @@ class LinkExtractorTest extends \PHPUnit\Framework\TestCase
             [
                 'offline.appcache',
                 'https://cdn.example.com/assets/',
-                'https://cdn.example.com/assets/archives.html'
+                'https://cdn.example.com/assets/archives.html',
             ],
             $extractor->extract()
         );
@@ -320,7 +321,7 @@ class LinkExtractorTest extends \PHPUnit\Framework\TestCase
                 $dom,
                 $modern,
                 trim(file_get_contents($urlfile)),
-                file($urlsfile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES)
+                file($urlsfile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES),
             ];
         }
         return $data;

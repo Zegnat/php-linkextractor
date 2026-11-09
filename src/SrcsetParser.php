@@ -1,4 +1,5 @@
 <?php
+
 /**
  * The SrcsetParser turns the value of a srcset attribute into image candidates.
  *

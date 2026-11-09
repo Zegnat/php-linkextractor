@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Testing if SrcsetParser parses image candidate strings.
  *

@@ -167,7 +167,7 @@ function analyse(
 ): int {
     $engine = container_runtime($runtime);
 
-    $image = build_image($engine, [], 'Dockerfile.phpstan');
+    $image = build_image($engine, [], 'Dockerfile.tools');
     // Pass on the exit code of a failed build.
     if (\is_int($image)) {
         return $image;
@@ -183,4 +183,23 @@ function analyse(
     }
 
     return $exitCode;
+}
+
+#[AsTask(description: 'Check the code style against PER Coding Style')]
+function style(
+    #[AsOption(description: 'Container runtime to use: podman or docker', mode: InputOption::VALUE_REQUIRED)]
+    string $runtime = '',
+): int {
+    $engine = container_runtime($runtime);
+
+    $image = build_image($engine, [], 'Dockerfile.tools');
+    // Pass on the exit code of a failed build.
+    if (\is_int($image)) {
+        return $image;
+    }
+
+    return run(
+        [$engine, 'run', '--rm', $image, 'tools/php-cs-fixer/vendor/bin/php-cs-fixer', 'check', '--diff'],
+        context()->withAllowFailure(true),
+    )->getExitCode() ?? 1;
 }
