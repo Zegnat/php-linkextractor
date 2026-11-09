@@ -1,6 +1,5 @@
 parameters:
-    # Level 7 and up need the constructor and extract() to narrow the two DOM APIs in code, not in docblocks.
-    level: 6
+    level: max
     paths:
         - src
     # The public API has no native types for PHP 7.0, so it checks its docblock types at runtime.

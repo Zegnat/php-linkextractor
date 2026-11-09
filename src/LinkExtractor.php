@@ -66,7 +66,7 @@ class LinkExtractor
      * @var string $htmlSpaceCharacters
      * @see https://infra.spec.whatwg.org/#ascii-whitespace
      **/
-    private $htmlSpaceCharacters = ' \t\n\f\r';
+    private $htmlSpaceCharacters = " \t\n\f\r";
 
     /**
      * Pattern capturing the scheme, and everything that follows it, of an absolute URI reference.
@@ -106,7 +106,7 @@ class LinkExtractor
      **/
     private function htmlStripWhitespace(string $string): string
     {
-        return \preg_replace(\sprintf('@^[%1$s]*|[%1$s]*$@', $this->htmlSpaceCharacters), '', $string);
+        return \trim($string, $this->htmlSpaceCharacters);
     }
 
     /**
@@ -160,7 +160,9 @@ class LinkExtractor
     {
         $expected = $modernParser ? '\\Dom\\XPath' : '\\DOMXPath';
         if ($xpath === null) {
-            return new $expected($ownerDocument);
+            return $ownerDocument instanceof \DOMDocument
+                ? new \DOMXPath($ownerDocument)
+                : new \Dom\XPath($ownerDocument);
         }
         if (!$xpath instanceof $expected) {
             throw new \TypeError(\sprintf('$xpath must be a %s.', $expected));
@@ -212,8 +214,10 @@ class LinkExtractor
         // Match on local-name() because the modern parser adds a namespace.
         /** @var \DOMNodeList<\DOMElement>|\Dom\NodeList<\Dom\Element>|false $base */
         $base = $this->xpath->query("//*[local-name()='base'][@href]", $root);
-        if ($base !== false && $base->length > 0) {
-            $baseElementUrl = new Uri($this->htmlStripWhitespace($base->item(0)->getAttribute('href')));
+        $baseElement = $base === false ? null : $base->item(0);
+        if ($baseElement !== null) {
+            // The query only matches elements with an HREF, but \Dom\Element::getAttribute() is typed ?string.
+            $baseElementUrl = new Uri($this->htmlStripWhitespace((string) $baseElement->getAttribute('href')));
             $baseUrl = UriResolver::resolve($baseUrl, $baseElementUrl);
         }
 
@@ -247,13 +251,16 @@ class LinkExtractor
             ),
             3
         );
-        /** @var \DOMNodeList<\DOMAttr>|\Dom\NodeList<\Dom\Attr>|false $urlAttributes */
+        // The expression is built from constants, so it is always valid and the query never returns false.
+        /** @var \DOMNodeList<\DOMAttr>|\Dom\NodeList<\Dom\Attr> $urlAttributes */
         $urlAttributes = $this->xpath->query($xpath, $this->root);
         $links = [];
         foreach ($urlAttributes as $urlAttribute) {
             $name = $urlAttribute->name;
             $url = $this->htmlStripWhitespace($urlAttribute->value);
-            $element = \strtolower($urlAttribute->ownerElement->tagName);
+            /** @var \DOMElement|\Dom\Element $ownerElement An attribute matched by XPath always has one. */
+            $ownerElement = $urlAttribute->ownerElement;
+            $element = \strtolower($ownerElement->tagName);
             // The parser resolves MANIFEST before any BASE element has been seen, so BASE can never affect it.
             $baseUrl = ($name === 'manifest' && $element === 'html') ? $this->documentUrl : $this->baseUrl;
             if (
@@ -271,7 +278,8 @@ class LinkExtractor
                 \array_key_exists($name, $this->spaceSeparatedUrlAttributes)
                 && \in_array($element, $this->spaceSeparatedUrlAttributes[$name])
             ) {
-                foreach (\preg_split('@[' . $this->htmlSpaceCharacters . ']+@', $url, -1, PREG_SPLIT_NO_EMPTY) as $singleUrl) {
+                $singleUrls = \preg_split('@[' . $this->htmlSpaceCharacters . ']+@', $url, -1, PREG_SPLIT_NO_EMPTY);
+                foreach ($singleUrls ?: [] as $singleUrl) {
                     $links[] = $this->resolveUrl($singleUrl, $baseUrl);
                 }
             } elseif (
