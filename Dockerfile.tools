@@ -2,17 +2,24 @@
 #
 # Each tool has its own manifest in tools/, because the main one has to
 # resolve on PHP 7.0 and neither tool installs there.
+ARG TARGET_PHP=8.4
+
+# Resolve as if running on the target PHP version, as Dockerfile.matrix does.
 FROM composer:2.7 AS deps
+ARG TARGET_PHP
 WORKDIR /app
 COPY composer.json ./
 COPY vendored ./vendored
 COPY tools/phpstan/composer.json ./tools/phpstan/
 COPY tools/php-cs-fixer/composer.json ./tools/php-cs-fixer/
-RUN composer update --no-interaction --prefer-stable --no-dev --ignore-platform-req=ext-* \
+RUN composer config platform.php "${TARGET_PHP}.0" \
+    && composer config --working-dir=tools/phpstan platform.php "${TARGET_PHP}.0" \
+    && composer config --working-dir=tools/php-cs-fixer platform.php "${TARGET_PHP}.0" \
+    && composer update --no-interaction --prefer-stable --no-dev --ignore-platform-req=ext-* \
     && composer update --no-interaction --prefer-stable --working-dir=tools/phpstan \
     && composer update --no-interaction --prefer-stable --working-dir=tools/php-cs-fixer
 
-FROM php:8.4-cli
+FROM php:${TARGET_PHP}-cli
 WORKDIR /app
 COPY . .
 COPY --from=deps /app/vendor ./vendor

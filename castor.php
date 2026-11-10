@@ -167,7 +167,7 @@ function analyse(
 ): int {
     $engine = container_runtime($runtime);
 
-    $image = build_image($engine, [], 'Dockerfile.tools');
+    $image = build_image($engine, ['--build-arg', 'TARGET_PHP=' . DEFAULT_PHP], 'Dockerfile.tools');
     // Pass on the exit code of a failed build.
     if (\is_int($image)) {
         return $image;
@@ -192,7 +192,7 @@ function style(
 ): int {
     $engine = container_runtime($runtime);
 
-    $image = build_image($engine, [], 'Dockerfile.tools');
+    $image = build_image($engine, ['--build-arg', 'TARGET_PHP=' . DEFAULT_PHP], 'Dockerfile.tools');
     // Pass on the exit code of a failed build.
     if (\is_int($image)) {
         return $image;
