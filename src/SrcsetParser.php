@@ -10,7 +10,7 @@
  * @author    Martijn van der Ven <martijn@vanderven.se>
  * @copyright 2026 Martijn van der Ven
  * @license   BSD Zero Clause License
- * @version   0.3.0
+ * @version   1.0.0
  * @link      https://github.com/Zegnat/php-linkextractor
  * @see       https://html.spec.whatwg.org/multipage/images.html#parsing-a-srcset-attribute The algorithm followed.
  */

@@ -6,7 +6,7 @@
  * @author    Martijn van der Ven <martijn@vanderven.se>
  * @copyright 2026 Martijn van der Ven and authors
  * @license   BSD Zero Clause License
- * @version   0.3.0
+ * @version   1.0.0
  * @link      https://github.com/Zegnat/php-linkextractor
  */
 
