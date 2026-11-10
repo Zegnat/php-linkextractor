@@ -8,7 +8,7 @@
  * 2. how to supply them in a useful (resolved) format.
  *
  * @author    Martijn van der Ven <martijn@vanderven.se>
- * @copyright 2017 Martijn van der Ven
+ * @copyright 2017, 2026 Martijn van der Ven
  * @license   BSD Zero Clause License
  * @version   1.0.0
  * @link      https://github.com/Zegnat/php-linkextractor
