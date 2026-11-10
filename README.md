@@ -120,6 +120,8 @@ container, so only Castor and a container runtime are needed on the host:
 $ castor matrix     # run the whole matrix
 $ castor test 8.4   # run a single version
 $ castor coverage   # run with code coverage and enforce the minimum
+$ castor analyse    # run PHPStan over the library and castor.php
+$ castor style      # check the code style against PER Coding Style
 ```
 
 Both Podman and Docker work. Whichever of the two is on your `PATH` is used, 

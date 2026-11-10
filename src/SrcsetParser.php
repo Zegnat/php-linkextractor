@@ -1,4 +1,5 @@
 <?php
+
 /**
  * The SrcsetParser turns the value of a srcset attribute into image candidates.
  *
@@ -63,7 +64,8 @@ class SrcsetParser
      *
      * @param string $input The value of a srcset attribute.
      *
-     * @return array Every valid image candidate, in the order they appear in the attribute.
+     * @return list<array{url: string, width: null|int, density: null|float}> Every valid image candidate, in the
+     *     order they appear in the attribute.
      *
      * @see https://html.spec.whatwg.org/multipage/images.html#parsing-a-srcset-attribute
      *
@@ -108,7 +110,7 @@ class SrcsetParser
      * @param string $input    The value of a srcset attribute.
      * @param int    $position The offset directly after the URL. Moved to directly after the candidate string.
      *
-     * @return array The descriptors, as the strings they were written as.
+     * @return list<string> The descriptors, as the strings they were written as.
      *
      * @see https://html.spec.whatwg.org/multipage/images.html#parsing-a-srcset-attribute
      **/
@@ -165,9 +167,10 @@ class SrcsetParser
      * A future-compat-h descriptor is recognised so that it can invalidate the candidates the HTML Standard says it
      * invalidates, but it is never reported: it does not describe the image, only a future version of the syntax.
      *
-     * @param array $descriptors The descriptors of one image candidate string.
+     * @param list<string> $descriptors The descriptors of one image candidate string.
      *
-     * @return array The `error` flag, and the `width` and `density` that were parsed.
+     * @return array{error: bool, width: null|int, density: null|float} The `error` flag, and the `width` and
+     *     `density` that were parsed.
      *
      * @see https://html.spec.whatwg.org/multipage/images.html#parsing-a-srcset-attribute
      **/

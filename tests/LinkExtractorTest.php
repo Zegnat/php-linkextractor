@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Testing if LinkExtractor extracts links.
  *
@@ -81,7 +82,10 @@ class LinkExtractorTest extends \PHPUnit\Framework\TestCase
     private static function extractorXPath(LinkExtractor $extractor)
     {
         $property = new \ReflectionProperty(LinkExtractor::class, 'xpath');
-        $property->setAccessible(true);
+        // getValue() reads private properties without this since PHP 8.1, and 8.5 deprecates calling it.
+        if (\PHP_VERSION_ID < 80100) {
+            $property->setAccessible(true);
+        }
         return $property->getValue($extractor);
     }
 
@@ -134,7 +138,7 @@ class LinkExtractorTest extends \PHPUnit\Framework\TestCase
             [
                 'offline.appcache',
                 'https://cdn.example.com/assets/',
-                'https://cdn.example.com/assets/archives.html'
+                'https://cdn.example.com/assets/archives.html',
             ],
             $extractor->extract()
         );
@@ -317,7 +321,7 @@ class LinkExtractorTest extends \PHPUnit\Framework\TestCase
                 $dom,
                 $modern,
                 trim(file_get_contents($urlfile)),
-                file($urlsfile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES)
+                file($urlsfile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES),
             ];
         }
         return $data;
