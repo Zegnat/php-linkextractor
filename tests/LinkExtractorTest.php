@@ -54,6 +54,21 @@ class LinkExtractorTest extends \PHPUnit\Framework\TestCase
         $this->assertSame(['http://zegnat.example/in'], $extractor->extract());
     }
 
+    public function testElementRootIncludesItsOwnAttributes()
+    {
+        $dom = new \DOMDocument();
+        $dom->loadHTML('<a href="/self">self</a>', LIBXML_NOERROR | LIBXML_NOWARNING);
+        $a = $dom->getElementsByTagName('a')->item(0);
+        $extractor = new LinkExtractor($a, 'http://zegnat.example/');
+        $this->assertSame(['http://zegnat.example/self'], $extractor->extract(), '\DOMDocument');
+        if (class_exists('\\Dom\\HTMLDocument')) {
+            $modernDom = \Dom\HTMLDocument::createFromString('<a href="/self">self</a>', LIBXML_NOERROR);
+            $a = $modernDom->getElementsByTagName('a')->item(0);
+            $extractor = new LinkExtractor($a, 'http://zegnat.example/');
+            $this->assertSame(['http://zegnat.example/self'], $extractor->extract(), '\Dom\HTMLDocument');
+        }
+    }
+
     public function testConstructorUsesSuppliedXPathModern()
     {
         if (!class_exists('\\Dom\\HTMLDocument')) {
