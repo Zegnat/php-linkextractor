@@ -177,7 +177,7 @@ function analyse(
     $exitCode = 0;
     foreach (['phpstan.neon.dist', 'phpstan-castor.neon.dist'] as $configuration) {
         $exitCode = run(
-            [$engine, 'run', '--rm', $image, 'tools/phpstan/vendor/bin/phpstan', 'analyse', '-c', $configuration],
+            [$engine, 'run', '--rm', $image, 'tools/vendor/bin/phpstan', 'analyse', '-c', $configuration],
             context()->withAllowFailure(true),
         )->getExitCode() ?: $exitCode;
     }
@@ -199,7 +199,7 @@ function style(
     }
 
     return run(
-        [$engine, 'run', '--rm', $image, 'tools/php-cs-fixer/vendor/bin/php-cs-fixer', 'check', '--diff'],
+        [$engine, 'run', '--rm', $image, 'tools/vendor/bin/php-cs-fixer', 'check', '--diff'],
         context()->withAllowFailure(true),
     )->getExitCode() ?? 1;
 }
