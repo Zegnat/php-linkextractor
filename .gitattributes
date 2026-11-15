@@ -8,6 +8,13 @@
 /phpunit.xml.dist   export-ignore
 /tests              export-ignore
 
+# The analysis tooling is not needed to use the library.
+/.php-cs-fixer.dist.php     export-ignore
+/Dockerfile.tools           export-ignore
+/phpstan-castor.neon.dist   export-ignore
+/phpstan.neon.dist          export-ignore
+/tools                      export-ignore
+
 # The fixtures these cover are not exported, so their licences need not be.
 /LICENSES/Apache-2.0.txt    export-ignore
 /LICENSES/BSD-3-Clause.txt  export-ignore
