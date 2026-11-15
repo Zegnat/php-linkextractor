@@ -2,3 +2,4 @@ composer.lock
 /vendor/
 /.phpunit.result.cache
 /.castor.stub.php
+/.php-cs-fixer.cache

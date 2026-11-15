@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<phpunit bootstrap="vendor/autoload.php" colors="true">
+<phpunit bootstrap="vendor/autoload.php" colors="true" convertDeprecationsToExceptions="true" failOnWarning="true">
     <testsuites>
         <testsuite name="linkextractor">
             <directory>tests</directory>

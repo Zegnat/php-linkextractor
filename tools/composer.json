@@ -1,0 +1,7 @@
+{
+    "description": "PHPStan and PHP CS Fixer, kept out of the main manifest because they do not install on PHP 7.0.",
+    "require": {
+        "friendsofphp/php-cs-fixer": "^3.95",
+        "phpstan/phpstan": "^2.1"
+    }
+}

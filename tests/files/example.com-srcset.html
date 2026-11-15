@@ -1,0 +1,28 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Image candidate strings</title>
+</head>
+
+<body>
+<h1>Image candidate strings</h1>
+
+<!-- The parser itself is covered by SrcsetParserTest. What is left to show here is that the
+     attributes are found on their elements, parsed, and resolved against the document URL. -->
+<picture>
+    <source srcset="wide.png 1024w, wider.png 2048w" media="(min-width: 600px)">
+    <source srcset="narrow.png">
+    <img src="fallback.png" alt="A responsive picture">
+</picture>
+
+<!-- A comma is part of the URL, and has to survive resolving as one. -->
+<img srcset="a,b.png 100w, c,d,e.png 200w" alt="Commas in the URLs">
+
+<!-- An attribute value can be spread over several lines and still reach the parser whole. -->
+<img srcset="
+    ,  spaced.png    640w   ,
+    wrapped.png
+" alt="Whitespace around the candidates">
+</body>
+</html>

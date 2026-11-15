@@ -17,27 +17,6 @@ about what a link is, and further in person discussion at [IWC Berlin
 [webmention-links]: https://github.com/w3c/webmention/issues/91
 [iwc-berling-2017]: https://indieweb.org/2017/Berlin
 
-## Using versions < 1.0
-
-The current function prototypes are the same as those that will be in 1.0.0. 
-This means you can write the method calls in your code right now and update 
-to 1.0.0 without breaking any of your calls later.
-
-```php
-function extract(): array
-function linksTo(string $url): bool
-```
-
-If you rely on specific output or exceptions from these methods however, 
-there might be breaking changes before version 1.0.0. Take a look at [the 
-roadmap to version 1.0.0][milestone-1] to get an idea of  what is likely to 
-still be changed.
-
-Don’t wait for 1.0.0 with using this library if you need it! Instead, start 
-using it and leave the ever-important feedback.
-
-[milestone-1]: https://github.com/Zegnat/php-linkextractor/milestone/1
-
 ## Install
 
 Via Composer
@@ -74,6 +53,35 @@ $dom = \Dom\HTMLDocument::createFromString(
 $extractor = new \Zegnat\LinkExtractor\LinkExtractor($dom, 'http://example.com/index.html');
 ```
 
+### Supplying your own XPath
+
+An optional third constructor argument takes an already created `\DOMXPath` 
+or `\Dom\XPath` instance for the same document. If none is given, one will be 
+created.
+
+## Parsing a srcset attribute on its own
+
+A `srcset` attribute does not hold URLs, it holds a comma-separated list of 
+image candidate strings. The parser the LinkExtractor uses for them is a 
+public class of its own, so it can be used without the rest of this library:
+
+``` php
+use Zegnat\LinkExtractor\SrcsetParser;
+
+$candidates = SrcsetParser::parse('small.png, large.png 2x, broken.png 1x 2x');
+/*
+[
+    ['url' => 'small.png', 'width' => null, 'density' => null],
+    ['url' => 'large.png', 'width' => null, 'density' => 2.0],
+]
+*/
+```
+
+URLs are returned exactly as they were written, as the parser does not know 
+what document they came from; resolve them yourself. Image candidates the HTML 
+Standard rejects are left out, which is why `broken.png` is missing above: a 
+candidate cannot carry two pixel density descriptors.
+
 ## Supported PHP versions
 
 This library requires PHP 7.0 or newer and is tested against PHP 7.0, 7.1, 
@@ -83,14 +91,24 @@ From PHP 8.4 onwards it accepts both `\DOMNode` and `\Dom\Node`.
 
 ## Testing
 
-Tests run on every supported PHP version through Docker, orchestrated by 
+Tests run on every supported PHP version in containers, orchestrated by 
 [Castor][castor]. Each PHP version and its dependencies live entirely in their 
-container, so only Docker and Castor are needed on the host:
+container, so only Castor and a container runtime are needed on the host:
 
 ``` bash
 $ castor matrix     # run the whole matrix
 $ castor test 8.4   # run a single version
 $ castor coverage   # run with code coverage and enforce the minimum
+$ castor analyse    # run PHPStan over the library and castor.php
+$ castor style      # check the code style against PER Coding Style
+```
+
+Both Podman and Docker work. Whichever of the two is on your `PATH` is used, 
+preferring Podman when both are installed because it needs no root. Pass 
+`--runtime` to any of the tasks to choose explicitly:
+
+``` bash
+$ castor test 8.4 --runtime docker
 ```
 
 Some test fixtures under `tests/files` are copied verbatim from external 
@@ -98,9 +116,14 @@ open-source projects under their respective licenses; see [CREDITS.md](CREDITS.m
 for their sources and the `LICENSES` directory ([REUSE][reuse]).
 
 [castor]: https://castor.jolicode.com/
-[reuse]: https://reuse.software/
 
 ## License
 
 The BSD Zero Clause License (0BSD). Please see the LICENSE file for more 
 information.
+
+Files under [`vendored/`](vendored) are copied from other projects and keep 
+their own licenses. Each one has a `.license` sidecar naming its copyright and 
+license, with the full text in [`LICENSES/`](LICENSES) ([REUSE][reuse]).
+
+[reuse]: https://reuse.software/
